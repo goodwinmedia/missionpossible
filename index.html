@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#07070e">
+  <title>Mission Possible</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+
+  <!-- ─── LOADING ─────────────────────────────────────────── -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-inner">
+      <div class="loading-icon">🎯</div>
+      <h1 class="loading-title">Mission Possible</h1>
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <!-- ─── ONBOARDING ──────────────────────────────────────── -->
+  <div id="onboarding" class="screen hidden">
+    <div class="ob-glow"></div>
+    <div class="ob-content">
+
+      <div class="ob-header">
+        <div class="ob-badge">MISSION MODE</div>
+        <h1 class="ob-title">Battle of<br>the Zones</h1>
+        <p class="ob-sub">4 weeks. 4 categories. One winning zone.<br>Your mission starts now.</p>
+      </div>
+
+      <!-- Step 1: pick existing user -->
+      <div id="step-select" class="ob-step">
+        <h3 class="ob-label">Who are you?</h3>
+        <div id="existing-users-list" class="existing-users"></div>
+        <div class="or-divider">or</div>
+        <button id="btn-new-user" class="btn-ghost-new">+ New here</button>
+      </div>
+
+      <!-- Step 2: create user -->
+      <div id="step-new-user" class="ob-step hidden">
+        <h3 class="ob-label">Your name</h3>
+        <input id="input-name" class="name-input" type="text" placeholder="First + Last…" maxlength="40" autocomplete="off">
+
+        <h3 class="ob-label">Your zone</h3>
+        <div id="zone-picker" class="zone-picker"></div>
+
+        <button id="btn-join" class="btn-primary" disabled>Let's Go →</button>
+        <button id="btn-back-select" class="btn-text-back">← Go back</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── MAIN APP ─────────────────────────────────────────── -->
+  <div id="main-app" class="hidden">
+
+    <!-- Header -->
+    <header id="app-header">
+      <div class="hdr-left">
+        <div class="streak-pill">
+          <span class="flame">🔥</span>
+          <span id="streak-count" class="streak-num">0</span>
+        </div>
+      </div>
+      <h2 id="header-view-title" class="hdr-title">Today</h2>
+      <div class="hdr-right">
+        <div class="pts-pill">
+          <span id="total-points" class="pts-num">0</span>
+          <span class="pts-label">pts</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- View container -->
+    <main id="view-container">
+
+      <!-- ── HOME ─────────────────────────────────────────── -->
+      <div id="view-home" class="view active">
+        <div class="view-scroll">
+          <div class="home-greeting">
+            <h1 id="greeting-text">Morning! 🔥</h1>
+            <p id="today-date-label" class="greeting-sub"></p>
+          </div>
+
+          <div class="rings-grid" id="rings-grid"></div>
+
+          <div id="challenge-strip" class="challenge-strip"></div>
+
+          <div class="section-head">
+            <span class="section-title">Today's Habits</span>
+            <span class="section-tap-hint">Tap to complete</span>
+          </div>
+          <div id="today-habits-list"></div>
+        </div>
+      </div>
+
+      <!-- ── LOG ──────────────────────────────────────────── -->
+      <div id="view-log" class="view">
+        <div class="view-scroll">
+          <div class="log-heading">
+            <h2>Log Activity</h2>
+            <p>Tap what you completed</p>
+          </div>
+
+          <div class="date-selector">
+            <button id="date-prev" class="date-nav">‹</button>
+            <div class="date-display">
+              <span id="log-date-day" class="date-day">Today</span>
+              <span id="log-date-full" class="date-full">—</span>
+            </div>
+            <button id="date-next" class="date-nav">›</button>
+          </div>
+
+          <div id="log-habits-container"></div>
+
+          <div class="log-submit-wrap">
+            <p id="log-pts-count" class="log-pts-preview">0 pts selected</p>
+            <button id="btn-submit-log" class="btn-submit">Save Progress ✓</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── LEADERBOARD ──────────────────────────────────── -->
+      <div id="view-leaderboard" class="view">
+        <div class="view-scroll">
+          <div class="lb-heading">
+            <h2>Battle of the Zones</h2>
+            <div class="lb-tabs">
+              <button id="tab-zones"  class="lb-tab active" data-tab="zones">Zones</button>
+              <button id="tab-people" class="lb-tab"        data-tab="people">People</button>
+            </div>
+          </div>
+
+          <div id="lb-zones"></div>
+          <div id="lb-people" class="hidden"></div>
+        </div>
+      </div>
+
+      <!-- ── PROFILE ──────────────────────────────────────── -->
+      <div id="view-profile" class="view">
+        <div class="view-scroll">
+          <div class="profile-hero">
+            <div id="profile-avatar" class="profile-avatar"></div>
+            <h2 id="profile-name">—</h2>
+            <div id="profile-zone-badge" class="zone-badge">—</div>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card"><div id="stat-total-pts" class="stat-val">0</div><div class="stat-lbl">Points</div></div>
+            <div class="stat-card"><div id="stat-streak"    class="stat-val">0</div><div class="stat-lbl">Streak 🔥</div></div>
+            <div class="stat-card"><div id="stat-rank"      class="stat-val">#–</div><div class="stat-lbl">Rank</div></div>
+          </div>
+
+          <div class="profile-card">
+            <h3 class="card-label">Category Breakdown</h3>
+            <div id="breakdown-bars"></div>
+          </div>
+
+          <div class="profile-card">
+            <h3 class="card-label">This Week</h3>
+            <div id="weekly-progress-grid" class="weekly-grid"></div>
+          </div>
+
+          <div class="profile-actions">
+            <button id="btn-change-zone" class="btn-secondary">Change Zone</button>
+            <button id="btn-logout"      class="btn-danger">Switch User</button>
+          </div>
+
+          <div class="admin-link">
+            <button class="btn-text-admin" onclick="window.promptAdmin()">Admin</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ADMIN ─────────────────────────────────────────── -->
+      <div id="view-admin" class="view">
+        <div class="view-scroll">
+          <div class="admin-topbar">
+            <button id="btn-exit-admin" class="btn-back-sm">← Back</button>
+            <h2>Admin Panel</h2>
+          </div>
+          <div id="admin-content"></div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav id="bottom-nav">
+      <button class="nav-btn active" data-view="home">
+        <span class="nav-icon">🏠</span><span class="nav-lbl">Home</span>
+      </button>
+      <button class="nav-btn" data-view="log">
+        <span class="nav-icon">✏️</span><span class="nav-lbl">Log</span>
+      </button>
+      <button class="nav-btn" data-view="leaderboard">
+        <span class="nav-icon">🏆</span><span class="nav-lbl">Ranks</span>
+      </button>
+      <button class="nav-btn" data-view="profile">
+        <span class="nav-icon">👤</span><span class="nav-lbl">Me</span>
+      </button>
+    </nav>
+
+  </div><!-- /main-app -->
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+</div><!-- /app -->
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
