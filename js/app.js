@@ -891,6 +891,49 @@ async function renderAdmin() {
 
 // ── ZONE PICKER MODAL ─────────────────────────────────────────────────────────
 
+function showNameEditor() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <h3>Edit Name</h3>
+      <input id="edit-name-input" class="name-input" type="text"
+        value="${state.user.name}" maxlength="40" autocomplete="off" style="margin-bottom:.75rem">
+      <div style="display:flex;gap:.5rem">
+        <button class="btn-primary" id="modal-save-name" style="margin:0;flex:1">Save</button>
+        <button class="btn-secondary" id="modal-cancel-name" style="flex:0 0 auto;padding:.9rem 1rem">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const input = overlay.querySelector('#edit-name-input');
+  input.focus();
+  input.select();
+
+  overlay.querySelector('#modal-cancel-name').addEventListener('click', () => overlay.remove());
+
+  overlay.querySelector('#modal-save-name').addEventListener('click', async () => {
+    const newName = input.value.trim();
+    if (!newName) return;
+    if (newName === state.user.name) { overlay.remove(); return; }
+
+    const duplicate = state.allUsers.find(u => u.id !== state.user.id && u.name.toLowerCase() === newName.toLowerCase());
+    if (duplicate) { showToast('That name is already taken', 'error'); return; }
+
+    try {
+      await db.updateUserName(state.user.id, newName);
+      state.user.name = newName;
+      state.allUsers = state.allUsers.map(u => u.id === state.user.id ? { ...u, name: newName } : u);
+      localStorage.setItem('mp_user', JSON.stringify(state.user));
+      overlay.remove();
+      renderProfile();
+      showToast('Name updated!', 'success');
+    } catch (e) {
+      showToast(e?.message?.includes('unique') ? 'Name already taken' : 'Update failed', 'error');
+    }
+  });
+}
+
 function showZonePicker() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -975,6 +1018,7 @@ function bindEvents() {
     document.getElementById('lb-zones').classList.add('hidden');
   });
 
+  document.getElementById('btn-edit-name').addEventListener('click', showNameEditor);
   document.getElementById('btn-change-zone').addEventListener('click', showZonePicker);
 
   document.getElementById('btn-logout').addEventListener('click', () => {

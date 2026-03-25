@@ -813,7 +813,8 @@ button { cursor: pointer; font-family: var(--fbody); }
   font-size: .6rem; font-weight: 700; color: var(--success);
 }
 
-.profile-actions { display: flex; gap: .5rem; margin-bottom: .7rem; }
+.profile-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: .7rem; }
+.profile-actions .btn-danger { grid-column: 1 / -1; }
 .btn-secondary {
   flex: 1;
   background: var(--card); border: 1.5px solid var(--border);

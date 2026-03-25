@@ -31,6 +31,11 @@ export async function updateUserZone(userId, zone_id) {
   if (error) throw error;
 }
 
+export async function updateUserName(userId, name) {
+  const { error } = await getClient().from('users').update({ name: name.trim() }).eq('id', userId);
+  if (error) throw error;
+}
+
 export async function adminDeleteUser(userId) {
   const { error } = await getClient().from('users').delete().eq('id', userId);
   if (error) throw error;
