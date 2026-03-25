@@ -27,9 +27,10 @@
 #neon-bg {
   position: fixed;
   inset: 0;
-  z-index: 0;        /* behind #app which is z-index 1 */
+  z-index: 0;
   pointer-events: none;
   background: var(--bg);
+  opacity: 0.35;
 }
 
 /* ── RESET ───────────────────────────────────────────────── */
