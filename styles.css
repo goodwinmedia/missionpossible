@@ -921,14 +921,32 @@ button { cursor: pointer; font-family: var(--fbody); }
   border-radius: var(--rs);
   flex: 1; max-width: 80px;
 }
-/* SVG line icons in nav */
-.nav-icon-svg { display: flex; align-items: center; justify-content: center; }
-.nav-icon-svg svg {
-  width: 22px; height: 22px;
-  stroke: var(--muted); stroke-width: 1.75;
-  transition: stroke .2s;
+/* SVG line icons in nav — color drives currentColor → stroke */
+.nav-icon-svg {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); transition: color .2s;
 }
-.nav-btn.active .nav-icon-svg svg { stroke: var(--purple); }
+.nav-icon-svg svg { width: 22px; height: 22px; stroke-width: 1.75; }
+.nav-btn.active .nav-icon-svg { color: var(--purple); }
+
+/* Small inline category icons (cat headers, breakdown bars, etc.) */
+.icon-sm {
+  width: 15px; height: 15px;
+  display: inline-flex; align-items: center; justify-content: center;
+  vertical-align: middle; margin-right: .35rem;
+}
+.icon-sm svg { width: 15px; height: 15px; stroke-width: 2; display: block; }
+
+/* Challenge pill icon */
+.cpill-icon { width: 13px; height: 13px; display: block; }
+.cpill-icon svg { width: 13px; height: 13px; stroke-width: 2; }
+
+/* Weekly chip icon */
+.wc-icon { width: 14px; height: 14px; display: block; }
+.wc-icon svg { width: 14px; height: 14px; stroke-width: 2; }
+
+/* Leaderboard rank badge */
+.lb-medal { font-family: var(--fhead); font-weight: 800; font-size: .95rem; min-width: 28px; text-align: center; }
 .nav-lbl {
   font-size: .6rem; font-weight: 600; color: var(--muted); letter-spacing: .03em;
   transition: color .2s;

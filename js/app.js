@@ -425,7 +425,7 @@ function renderChallengeStrip(completedIds, week) {
     const done = h.type === 'weekly' ? weeklyDone.has(h.id) : bonusDone.has(h.id);
     return `
       <div class="challenge-pill ${done ? 'done' : ''}" style="--cc:${cat.color}">
-        <span>${cat.emoji}</span>
+        <i data-lucide="${cat.icon}" class="cpill-icon" style="color:${cat.color}"></i>
         <span class="cpill-pts">${h.points}pt</span>
         ${done ? '<span class="cpill-check">✓</span>' : ''}
       </div>`;
@@ -434,6 +434,7 @@ function renderChallengeStrip(completedIds, week) {
   strip.innerHTML = `
     <div class="strip-label">Week ${week} Challenges</div>
     <div class="strip-pills">${pills}</div>`;
+  if (window.lucide) lucide.createIcons();
 }
 
 function renderHomeHabits(completedIds, today) {
@@ -454,7 +455,7 @@ function renderHomeHabits(completedIds, today) {
 
     return `
       <div class="cat-group">
-        <div class="cat-header" style="color:${cat.color}">${cat.emoji} ${cat.label}</div>
+        <div class="cat-header" style="color:${cat.color}"><i data-lucide="${cat.icon}" class="icon-sm"></i>${cat.label}</div>
         ${rows}
       </div>`;
   }).join('');
@@ -462,6 +463,7 @@ function renderHomeHabits(completedIds, today) {
   container.querySelectorAll('.habit-row.tappable').forEach(row => {
     row.addEventListener('click', () => toggleHabit(row.dataset.habitId, row.dataset.date));
   });
+  if (window.lucide) lucide.createIcons();
 }
 
 async function toggleHabit(habitId, date) {
@@ -564,7 +566,7 @@ function renderLogHabits() {
     return `
       <div class="log-cat-group">
         <div class="log-cat-header" style="color:${cat.color};border-color:${cat.color}22">
-          ${cat.emoji} ${cat.label}
+          <i data-lucide="${cat.icon}" class="icon-sm"></i>${cat.label}
         </div>
         ${rows}
       </div>`;
@@ -578,6 +580,7 @@ function renderLogHabits() {
   });
 
   updateLogPointsPreview();
+  if (window.lucide) lucide.createIcons();
 }
 
 function updateLogPointsPreview() {
@@ -701,11 +704,11 @@ function renderZoneLeaderboard() {
 
 function renderPeopleLeaderboard() {
   const { people } = aggregateData();
-  const medals = ['🥇', '🥈', '🥉'];
+  const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
 
   document.getElementById('lb-people').innerHTML = people.map((p, i) => `
     <div class="lb-person-row ${p.isMe ? 'is-me' : ''}">
-      <span class="lb-medal">${medals[i] || `#${i + 1}`}</span>
+      <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i < 3 ? i + 1 : `#${i + 1}`}</span>
       <div class="lb-avatar" style="background:${p.zone?.color || '#6b7280'}">${getInitials(p.name)}</div>
       <div class="lb-person-info">
         <div class="lb-person-name">${p.name}${p.isMe ? ' <span class="you-tag">you</span>' : ''}</div>
@@ -756,7 +759,7 @@ function renderProfile() {
   const maxCat = Math.max(...Object.values(catPts), 1);
   document.getElementById('breakdown-bars').innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => `
     <div class="breakdown-row">
-      <div class="bd-label"><span>${cat.emoji} ${cat.label}</span><span style="color:${cat.color}">${catPts[key]} pts</span></div>
+      <div class="bd-label"><span><i data-lucide="${cat.icon}" class="icon-sm" style="color:${cat.color}"></i>${cat.label}</span><span style="color:${cat.color}">${catPts[key]} pts</span></div>
       <div class="bd-track"><div class="bd-fill" style="width:${(catPts[key] / maxCat * 100).toFixed(1)}%;background:${cat.color}"></div></div>
     </div>`).join('');
 
@@ -769,7 +772,7 @@ function renderProfile() {
     const done = state.myEntries.some(e => e.habit_id === h.id && getWeekStart(e.date) === weekStart);
     return `
       <div class="weekly-chip ${done ? 'done' : ''}" style="--cc:${cat.color}">
-        <span>${cat.emoji}</span>
+        <i data-lucide="${cat.icon}" class="wc-icon" style="color:${cat.color}"></i>
         <span class="wc-pts">+${h.points}</span>
         ${done ? '<span class="wc-check">✓</span>' : ''}
       </div>`;
@@ -780,6 +783,8 @@ function renderProfile() {
     state.adminTaps = (state.adminTaps || 0) + 1;
     if (state.adminTaps >= 5) { state.adminTaps = 0; promptAdmin(); }
   };
+
+  if (window.lucide) lucide.createIcons();
 }
 
 function promptAdmin() {
@@ -817,7 +822,7 @@ async function renderAdmin() {
               <select class="admin-zone-sel" data-uid="${u.id}">
                 ${ZONES.map(z => `<option value="${z.id}" ${z.id === u.zone_id ? 'selected' : ''}>${z.name}</option>`).join('')}
               </select>
-              <button class="btn-del-user" data-uid="${u.id}">🗑</button>
+              <button class="btn-del-user" data-uid="${u.id}"><i data-lucide="trash-2" style="width:14px;height:14px;pointer-events:none"></i></button>
             </div>`;
         }).join('')}
       </div>
@@ -887,6 +892,8 @@ async function renderAdmin() {
       });
       a.click();
     });
+
+    if (window.lucide) lucide.createIcons();
 
   } catch (err) {
     container.innerHTML = `<p style="color:#ef4444;padding:1rem">Error: ${err.message}</p>`;
