@@ -384,18 +384,18 @@ function renderRings(completedIds, date) {
     const done = habits.filter(h => completedIds.has(h.id)).length;
     const total = habits.length;
     const pct = total ? done / total : 0;
-    const r = 34;
+    const r = 27;
     const circ = 2 * Math.PI * r;
     const dash = (pct * circ).toFixed(2);
 
     return `
       <div class="ring-card">
         <div class="ring-wrapper">
-          <svg class="ring-svg" viewBox="0 0 80 80">
-            <circle cx="40" cy="40" r="${r}" fill="none" stroke="${cat.color}22" stroke-width="5.5"/>
-            <circle cx="40" cy="40" r="${r}" fill="none" stroke="${cat.color}" stroke-width="5.5"
+          <svg class="ring-svg" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="${r}" fill="none" stroke="${cat.color}22" stroke-width="5.5"/>
+            <circle cx="32" cy="32" r="${r}" fill="none" stroke="${cat.color}" stroke-width="5.5"
               stroke-dasharray="${dash} ${circ.toFixed(2)}" stroke-linecap="round"
-              transform="rotate(-90 40 40)" style="transition:stroke-dasharray .6s ease"/>
+              transform="rotate(-90 32 32)" style="transition:stroke-dasharray .6s ease"/>
           </svg>
           <i data-lucide="${cat.icon}" class="ring-icon" style="color:${cat.color}"></i>
         </div>

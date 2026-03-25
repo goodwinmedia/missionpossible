@@ -463,23 +463,23 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .greeting-sub { color: var(--dim); font-size: .8rem; margin-top: .2rem; }
 
-/* Rings — 2×2 grid, bigger tiles */
+/* Rings — single row, 4 columns */
 .rings-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: .65rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .5rem;
   margin-bottom: 1.1rem;
 }
 .ring-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 1.1rem .75rem .85rem;
+  border-radius: var(--rs);
+  padding: .75rem .4rem;
   text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
 }
 .ring-wrapper {
-  position: relative; width: 80px; height: 80px;
+  position: relative; width: 64px; height: 64px;
   display: flex; align-items: center; justify-content: center;
 }
 .ring-svg {
@@ -487,14 +487,14 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .ring-icon {
   position: relative; z-index: 1;
-  width: 26px; height: 26px;
+  width: 20px; height: 20px;
 }
-.ring-icon svg { width: 26px; height: 26px; stroke-width: 1.75; }
+.ring-icon svg { width: 20px; height: 20px; stroke-width: 1.75; }
 .ring-label {
-  font-family: var(--fhead); font-size: .82rem; font-weight: 700; color: var(--dim);
+  font-family: var(--fhead); font-size: .68rem; font-weight: 700; color: var(--dim);
 }
 .ring-progress {
-  font-family: var(--fhead); font-size: 1.05rem; font-weight: 800;
+  font-family: var(--fhead); font-size: .85rem; font-weight: 800;
 }
 
 /* Challenge strip */
