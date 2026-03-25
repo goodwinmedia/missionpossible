@@ -6,9 +6,9 @@ export const ZONES = [
   { id: 1, name: 'Deacons',       color: '#3b82f6' },
   { id: 2, name: 'Teachers',      color: '#10b981' },
   { id: 3, name: 'Priests',       color: '#7c3aed' },
-  { id: 4, name: 'YW Class 1',    color: '#ec4899' },
-  { id: 5, name: 'YW Class 2',    color: '#f43f5e' },
-  { id: 6, name: 'YW Class 3',    color: '#a855f7' },
+  { id: 4, name: 'YW Class 12',    color: '#ec4899' },
+  { id: 5, name: 'YW Class 13-15',    color: '#f43f5e' },
+  { id: 6, name: 'YW Class 16-18',    color: '#a855f7' },
   { id: 7, name: 'Adult Leaders', color: '#6b7280' },
 ];
 
