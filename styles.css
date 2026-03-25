@@ -116,6 +116,7 @@ button { cursor: pointer; font-family: var(--fbody); }
   position: fixed;
   inset: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bg);
   z-index: 100;
   -webkit-overflow-scrolling: touch;
@@ -130,9 +131,12 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .ob-content {
   position: relative;
-  padding: 3rem 1.5rem 3rem;
+  padding: 2.5rem 1.25rem 3rem;
   max-width: 480px;
   margin: 0 auto;
+}
+@media (min-width: 400px) {
+  .ob-content { padding: 3rem 1.5rem 3rem; }
 }
 .ob-badge {
   display: inline-block;
@@ -148,7 +152,7 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .ob-title {
   font-family: var(--fhead);
-  font-size: 3rem;
+  font-size: clamp(2.2rem, 10vw, 3rem);
   font-weight: 800;
   line-height: 1.05;
   margin-bottom: .75rem;
