@@ -463,36 +463,38 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .greeting-sub { color: var(--dim); font-size: .8rem; margin-top: .2rem; }
 
-/* Rings */
+/* Rings — 2×2 grid, bigger tiles */
 .rings-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: .5rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: .65rem;
   margin-bottom: 1.1rem;
 }
 .ring-card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--rs);
-  padding: .75rem .4rem;
+  border-radius: var(--r);
+  padding: 1.1rem .75rem .85rem;
   text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
 }
 .ring-wrapper {
-  position: relative; width: 54px; height: 54px;
+  position: relative; width: 80px; height: 80px;
   display: flex; align-items: center; justify-content: center;
 }
 .ring-svg {
   position: absolute; inset: 0; width: 100%; height: 100%;
 }
-.ring-emoji-overlay {
-  position: relative; z-index: 1; font-size: 1.15rem; line-height: 1;
+.ring-icon {
+  position: relative; z-index: 1;
+  width: 26px; height: 26px;
 }
+.ring-icon svg { width: 26px; height: 26px; stroke-width: 1.75; }
 .ring-label {
-  font-size: .6rem; font-weight: 600; color: var(--dim); letter-spacing: .03em;
+  font-family: var(--fhead); font-size: .82rem; font-weight: 700; color: var(--dim);
 }
 .ring-progress {
-  font-family: var(--fhead); font-size: .78rem; font-weight: 700;
+  font-family: var(--fhead); font-size: 1.05rem; font-weight: 800;
 }
 
 /* Challenge strip */
@@ -919,16 +921,18 @@ button { cursor: pointer; font-family: var(--fbody); }
   border-radius: var(--rs);
   flex: 1; max-width: 80px;
 }
-.nav-icon {
-  font-size: 1.18rem;
-  filter: grayscale(1) opacity(.45);
-  transition: filter .2s;
+/* SVG line icons in nav */
+.nav-icon-svg { display: flex; align-items: center; justify-content: center; }
+.nav-icon-svg svg {
+  width: 22px; height: 22px;
+  stroke: var(--muted); stroke-width: 1.75;
+  transition: stroke .2s;
 }
+.nav-btn.active .nav-icon-svg svg { stroke: var(--purple); }
 .nav-lbl {
   font-size: .6rem; font-weight: 600; color: var(--muted); letter-spacing: .03em;
   transition: color .2s;
 }
-.nav-btn.active .nav-icon { filter: none; }
 .nav-btn.active .nav-lbl {
   background: var(--grad);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;

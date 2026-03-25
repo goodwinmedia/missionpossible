@@ -46,10 +46,10 @@ export const MISSIONS = [
 ];
 
 export const CATEGORIES = {
-  spiritual: { label: 'Spiritual', emoji: '✨', color: '#f59e0b' },
-  physical:  { label: 'Physical',  emoji: '💪', color: '#10b981' },
-  social:    { label: 'Social',    emoji: '🤝', color: '#60a5fa' },
-  emotional: { label: 'Emotional', emoji: '🧠', color: '#a855f7' },
+  spiritual: { label: 'Spiritual', emoji: '✨', icon: 'sun',      color: '#f59e0b' },
+  physical:  { label: 'Physical',  emoji: '💪', icon: 'activity', color: '#10b981' },
+  social:    { label: 'Social',    emoji: '🤝', icon: 'users',    color: '#60a5fa' },
+  emotional: { label: 'Emotional', emoji: '🧠', icon: 'heart',    color: '#a855f7' },
 };
 
 export const DAILY_HABITS = [
