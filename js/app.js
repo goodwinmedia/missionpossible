@@ -91,14 +91,16 @@ const state = {
 
 async function init() {
   try {
-    const saved = localStorage.getItem('mp_user') || sessionStorage.getItem('mp_user');
+    const fromLocal   = localStorage.getItem('mp_user');
+    const fromSession = sessionStorage.getItem('mp_user');
+    const saved       = fromLocal || fromSession;
     if (saved) {
       const parsed = JSON.parse(saved);
       const users = await db.getAllUsers();
       state.allUsers = users;
       const found = users.find(u => u.id === parsed.id);
       if (found) {
-        await loginUser(found);
+        await loginUser(found, !!fromLocal);
         return;
       }
     }
@@ -926,7 +928,9 @@ function showNameEditor() {
       await db.updateUserName(state.user.id, newName);
       state.user.name = newName;
       state.allUsers = state.allUsers.map(u => u.id === state.user.id ? { ...u, name: newName } : u);
-      localStorage.setItem('mp_user', JSON.stringify(state.user));
+      const savedUser = JSON.stringify(state.user);
+      if (localStorage.getItem('mp_user'))   localStorage.setItem('mp_user', savedUser);
+      else                                    sessionStorage.setItem('mp_user', savedUser);
       overlay.remove();
       renderProfile();
       showToast('Name updated!', 'success');
@@ -958,7 +962,9 @@ function showZonePicker() {
         const zoneId = parseInt(btn.dataset.zoneId);
         await db.updateUserZone(state.user.id, zoneId);
         state.user.zone_id = zoneId;
-        localStorage.setItem('mp_user', JSON.stringify(state.user));
+        const savedUser = JSON.stringify(state.user);
+        if (localStorage.getItem('mp_user'))   localStorage.setItem('mp_user', savedUser);
+        else                                    sessionStorage.setItem('mp_user', savedUser);
         overlay.remove();
         renderProfile();
         showToast('Zone updated!', 'success');
@@ -1025,6 +1031,7 @@ function bindEvents() {
 
   document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('mp_user');
+    sessionStorage.removeItem('mp_user');
     location.reload();
   });
 
