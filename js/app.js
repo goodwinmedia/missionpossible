@@ -91,7 +91,7 @@ const state = {
 
 async function init() {
   try {
-    const saved = localStorage.getItem('mp_user');
+    const saved = localStorage.getItem('mp_user') || sessionStorage.getItem('mp_user');
     if (saved) {
       const parsed = JSON.parse(saved);
       const users = await db.getAllUsers();
@@ -130,16 +130,26 @@ function showConfigError() {
 
 async function loadOnboarding() {
   if (!state.allUsers.length) {
-    try { state.allUsers = await db.getAllUsers(); } catch (_) { /* offline */ }
+    try {
+      state.allUsers = await db.getAllUsers();
+    } catch (err) {
+      state.loadError = err.message;
+    }
   }
   document.getElementById('loading-screen').classList.add('hidden');
   document.getElementById('onboarding').classList.remove('hidden');
   renderOnboarding();
 }
 
-async function loginUser(user) {
+async function loginUser(user, remember = true) {
   state.user = user;
-  localStorage.setItem('mp_user', JSON.stringify({ id: user.id, name: user.name, zone_id: user.zone_id }));
+  const saved = { id: user.id, name: user.name, zone_id: user.zone_id };
+  if (remember) {
+    localStorage.setItem('mp_user', JSON.stringify(saved));
+  } else {
+    sessionStorage.setItem('mp_user', JSON.stringify(saved));
+    localStorage.removeItem('mp_user');
+  }
   [state.myEntries, state.allEntries] = await Promise.all([
     db.getEntriesForUser(user.id),
     db.getAllEntries(),
@@ -166,7 +176,22 @@ function renderOnboarding() {
   const list = document.getElementById('existing-users-list');
 
   if (!state.allUsers.length) {
-    list.innerHTML = `<p class="no-users-msg">Be the first to join!</p>`;
+    if (state.loadError) {
+      list.innerHTML = `
+        <div class="load-error">
+          <p>⚠️ Couldn't load users</p>
+          <code>${state.loadError}</code>
+          <button class="btn-retry" id="btn-retry">Retry</button>
+        </div>`;
+      document.getElementById('btn-retry')?.addEventListener('click', async () => {
+        state.loadError = null;
+        document.getElementById('loading-screen').classList.remove('hidden');
+        document.getElementById('onboarding').classList.add('hidden');
+        await loadOnboarding();
+      });
+    } else {
+      list.innerHTML = `<p class="no-users-msg">Be the first to join!</p>`;
+    }
   } else {
     list.innerHTML = state.allUsers.map(u => {
       const zone = ZONES.find(z => z.id === u.zone_id);
@@ -186,8 +211,9 @@ function renderOnboarding() {
       btn.addEventListener('click', async () => {
         const user = state.allUsers.find(u => u.id === btn.dataset.id);
         if (user) {
+          const remember = document.getElementById('chk-remember')?.checked !== false;
           document.getElementById('loading-screen').classList.remove('hidden');
-          await loginUser(user);
+          await loginUser(user, remember);
         }
       });
     });
