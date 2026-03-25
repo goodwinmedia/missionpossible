@@ -246,123 +246,96 @@
   function resize() {
     W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
+    ctx.fillStyle = '#07070e';
+    ctx.fillRect(0, 0, W, H);
   }
   resize();
   window.addEventListener('resize', resize);
 
-  /* ── Trail ───────────────────────────────────────────── */
-  const trail = [];
-  const MAX   = 75;
-  let following  = false;
-  let idleTimer  = null;
-  let autoT      = 0;
+  /* ── Input ───────────────────────────────────────────────── */
+  let tgtX = -1, tgtY = -1;
+  let following = false;
+  let idleTimer = null;
+  let autoT     = Math.random() * 100;
 
-  function push(x, y) {
-    trail.push({ x, y });
-    while (trail.length > MAX) trail.shift();
-  }
-
-  function goIdle() {
-    following = false;
-  }
-
-  window.addEventListener('mousemove', e => {
-    push(e.clientX, e.clientY);
+  function setTarget(x, y) {
+    tgtX = x; tgtY = y;
     following = true;
     clearTimeout(idleTimer);
-    idleTimer = setTimeout(goIdle, 2500);
-  });
+    idleTimer = setTimeout(() => { following = false; }, 2500);
+  }
 
+  window.addEventListener('mousemove', e => setTarget(e.clientX, e.clientY));
   window.addEventListener('touchmove', e => {
-    const t = e.touches[0];
-    if (t) { push(t.clientX, t.clientY); }
-    following = true;
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(goIdle, 2500);
+    if (e.touches[0]) setTarget(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: true });
 
-  window.addEventListener('touchend', () => {
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(goIdle, 2500);
-  });
+  /* ── Smooth head + trail ─────────────────────────────────── */
+  let headX = -1, headY = -1;
+  const trail = [];
+  const MAX   = 55;
 
-  /* ── Idle auto-wander (lissajous + harmonic wobble) ─── */
-  function autoPoint() {
-    autoT += 0.006;
-    return {
-      x: W * 0.5 + Math.sin(autoT * 1.1) * W * 0.37 + Math.sin(autoT * 2.7) * W * 0.05,
-      y: H * 0.5 + Math.sin(autoT * 0.7) * H * 0.31 + Math.cos(autoT * 1.9) * H * 0.05,
-    };
+  /* ── Draw smooth bezier through all trail points ─────────── */
+  function strokeTrail(color, width, shColor, shBlur) {
+    if (trail.length < 3) return;
+    ctx.beginPath();
+    ctx.moveTo(trail[0].x, trail[0].y);
+    for (let i = 1; i < trail.length - 1; i++) {
+      const mx = (trail[i].x + trail[i + 1].x) * 0.5;
+      const my = (trail[i].y + trail[i + 1].y) * 0.5;
+      ctx.quadraticCurveTo(trail[i].x, trail[i].y, mx, my);
+    }
+    ctx.lineTo(trail[trail.length - 1].x, trail[trail.length - 1].y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = width;
+    ctx.lineCap     = 'round';
+    ctx.lineJoin    = 'round';
+    ctx.shadowColor = shColor || 'transparent';
+    ctx.shadowBlur  = shBlur  || 0;
+    ctx.stroke();
   }
 
-  /* ── Helpers ─────────────────────────────────────────── */
-  function lerp(a, b, n) { return a + (b - a) * n; }
-
-  /* ── Render loop ─────────────────────────────────────── */
+  /* ── Render loop ─────────────────────────────────────────── */
   function frame() {
     requestAnimationFrame(frame);
-    ctx.clearRect(0, 0, W, H);
 
+    // Temporal fade — old strokes ghost away naturally
+    ctx.fillStyle = 'rgba(7,7,14,0.14)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Update target
     if (!following) {
-      const p = autoPoint();
-      push(p.x, p.y);
+      autoT += 0.0045;
+      tgtX = W * 0.5 + Math.sin(autoT * 1.1) * W * 0.37 + Math.sin(autoT * 2.9) * W * 0.05;
+      tgtY = H * 0.5 + Math.sin(autoT * 0.7) * H * 0.31 + Math.cos(autoT * 1.8) * H * 0.06;
     }
 
-    if (trail.length < 2) return;
+    if (headX < 0) { headX = tgtX; headY = tgtY; }
 
-    for (let i = 1; i < trail.length; i++) {
-      const a    = trail[i - 1];
-      const b    = trail[i];
-      const prog = i / trail.length;          // 0 = tail, 1 = tip
-      const α    = Math.pow(prog, 1.6);
+    // Lerp head — slow drift when idle, responsive when following
+    const spd = following ? 0.13 : 0.04;
+    headX += (tgtX - headX) * spd;
+    headY += (tgtY - headY) * spd;
 
-      // Purple #7c3aed → Pink #ec4899
-      const r  = Math.round(lerp(124, 236, prog));
-      const g  = Math.round(lerp(58,  72,  prog));
-      const bv = Math.round(lerp(237, 153, prog));
+    trail.push({ x: headX, y: headY });
+    while (trail.length > MAX) trail.shift();
 
-      ctx.lineCap = 'round';
-
-      // Layer 1 — soft outer halo
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.strokeStyle = `rgba(${r},${g},${bv},${α * 0.10})`;
-      ctx.lineWidth   = lerp(6, 26, prog);
-      ctx.shadowBlur  = 0;
-      ctx.stroke();
-
-      // Layer 2 — mid glow
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.strokeStyle = `rgba(${r},${g},${bv},${α * 0.55})`;
-      ctx.lineWidth   = lerp(1.5, 6, prog);
-      ctx.shadowColor = `rgb(${r},${g},${bv})`;
-      ctx.shadowBlur  = 20;
-      ctx.stroke();
-
-      // Layer 3 — white-hot core
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.strokeStyle = `rgba(255,255,255,${α * 0.88})`;
-      ctx.lineWidth   = lerp(0.4, 2.2, prog);
-      ctx.shadowColor = `rgb(${r},${g},${bv})`;
-      ctx.shadowBlur  = 8;
-      ctx.stroke();
-    }
+    // 4-layer neon glow (3× thicker than original)
+    strokeTrail('rgba(150,50,255,0.10)',  72, null,       0);   // wide soft halo
+    strokeTrail('rgba(170,40,240,0.50)',  24, '#a020f0', 34);   // mid purple glow
+    strokeTrail('rgba(236,72,153,0.62)',  12, '#ec4899', 22);   // pink glow
+    strokeTrail('rgba(255,255,255,0.90)',  4.5,'#ec4899', 10);  // white-hot core
 
     // Tip orb
     const tip = trail[trail.length - 1];
-    const orb = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, 28);
-    orb.addColorStop(0,   'rgba(255,255,255,0.95)');
-    orb.addColorStop(0.2, 'rgba(236,72,153,0.65)');
-    orb.addColorStop(0.6, 'rgba(124,58,237,0.30)');
-    orb.addColorStop(1,   'rgba(124,58,237,0)');
     ctx.shadowBlur = 0;
+    const orb = ctx.createRadialGradient(tip.x, tip.y, 0, tip.x, tip.y, 54);
+    orb.addColorStop(0,    'rgba(255,255,255,1)');
+    orb.addColorStop(0.15, 'rgba(236,72,153,0.85)');
+    orb.addColorStop(0.5,  'rgba(124,58,237,0.45)');
+    orb.addColorStop(1,    'rgba(0,0,0,0)');
     ctx.beginPath();
-    ctx.arc(tip.x, tip.y, 28, 0, Math.PI * 2);
+    ctx.arc(tip.x, tip.y, 54, 0, Math.PI * 2);
     ctx.fillStyle = orb;
     ctx.fill();
   }

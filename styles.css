@@ -27,10 +27,9 @@
 #neon-bg {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 0;        /* behind #app which is z-index 1 */
   pointer-events: none;
-  mix-blend-mode: screen;
-  opacity: 0.72;
+  background: var(--bg);
 }
 
 /* ── RESET ───────────────────────────────────────────────── */
@@ -48,12 +47,14 @@ html, body {
   text-size-adjust: none;
 }
 
+/* App container sits above canvas */
 #app {
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  z-index: 1;
 }
 
 .hidden { display: none !important; }
@@ -129,7 +130,7 @@ button { cursor: pointer; font-family: var(--fbody); }
   inset: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: var(--bg);
+  background: transparent;   /* canvas provides the dark bg */
   z-index: 100;
   -webkit-overflow-scrolling: touch;
 }
@@ -146,6 +147,9 @@ button { cursor: pointer; font-family: var(--fbody); }
   padding: 2.5rem 1.25rem 3rem;
   max-width: 480px;
   margin: 0 auto;
+  background: rgba(7,7,14,0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 @media (min-width: 400px) {
   .ob-content { padding: 3rem 1.5rem 3rem; }
