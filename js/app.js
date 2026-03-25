@@ -173,28 +173,51 @@ function setupRealtime() {
 // ── ONBOARDING ────────────────────────────────────────────────────────────────
 
 function renderOnboarding() {
-  const list = document.getElementById('existing-users-list');
+  const filterPicker  = document.getElementById('filter-zone-picker');
+  const userListWrap  = document.getElementById('user-list-wrap');
+  const list          = document.getElementById('existing-users-list');
 
-  if (!state.allUsers.length) {
-    if (state.loadError) {
-      list.innerHTML = `
-        <div class="load-error">
-          <p>⚠️ Couldn't load users</p>
-          <code>${state.loadError}</code>
-          <button class="btn-retry" id="btn-retry">Retry</button>
-        </div>`;
-      document.getElementById('btn-retry')?.addEventListener('click', async () => {
-        state.loadError = null;
-        document.getElementById('loading-screen').classList.remove('hidden');
-        document.getElementById('onboarding').classList.add('hidden');
-        await loadOnboarding();
-      });
-    } else {
-      list.innerHTML = `<p class="no-users-msg">Be the first to join!</p>`;
-    }
+  // Render class filter chips
+  if (state.loadError) {
+    filterPicker.innerHTML = `
+      <div class="load-error">
+        <p>⚠️ Couldn't connect to database</p>
+        <code>${state.loadError}</code>
+        <button class="btn-retry" id="btn-retry">Retry</button>
+      </div>`;
+    userListWrap.classList.add('hidden');
+    document.getElementById('btn-retry')?.addEventListener('click', async () => {
+      state.loadError = null;
+      document.getElementById('loading-screen').classList.remove('hidden');
+      document.getElementById('onboarding').classList.add('hidden');
+      await loadOnboarding();
+    });
   } else {
-    list.innerHTML = state.allUsers.map(u => {
-      const zone = ZONES.find(z => z.id === u.zone_id);
+    filterPicker.innerHTML = ZONES.map(z => `
+      <button class="fzone-chip" data-zone-id="${z.id}" style="--zone-color:${z.color}">
+        ${z.name}
+      </button>`).join('');
+
+    filterPicker.querySelectorAll('.fzone-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterPicker.querySelectorAll('.fzone-chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        showUsersForZone(parseInt(btn.dataset.zoneId));
+      });
+    });
+  }
+
+  function showUsersForZone(zoneId) {
+    const zone     = ZONES.find(z => z.id === zoneId);
+    const filtered = state.allUsers.filter(u => u.zone_id === zoneId);
+    userListWrap.classList.remove('hidden');
+
+    if (!filtered.length) {
+      list.innerHTML = `<p class="no-users-msg">No one in ${zone?.name} yet.</p>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(u => {
       const missionFlag = u.mission ? u.mission.split(' ')[0] : '🌍';
       return `
         <button class="user-chip" data-id="${u.id}" style="border-color:${zone?.color || '#6b7280'}44">

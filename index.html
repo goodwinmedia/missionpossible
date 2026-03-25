@@ -35,21 +35,25 @@
         <p class="ob-sub">4 weeks. 4 categories. One winning class.<br>Your mission starts now.</p>
       </div>
 
-      <!-- Step 1: pick existing user -->
+      <!-- Step 1: pick class then name -->
       <div id="step-select" class="ob-step">
-        <h3 class="ob-label">Who are you?</h3>
-        <div id="existing-users-list" class="existing-users"></div>
+        <h3 class="ob-label">Pick your class</h3>
+        <div id="filter-zone-picker" class="filter-zone-picker"></div>
 
-        <label class="remember-me-row">
-          <div class="rm-toggle">
-            <input type="checkbox" id="chk-remember" checked>
-            <span class="rm-slider"></span>
-          </div>
-          <span class="rm-label">Remember me on this device</span>
-        </label>
+        <div id="user-list-wrap" class="hidden">
+          <h3 class="ob-label" id="user-list-label">Select your name</h3>
+          <div id="existing-users-list" class="existing-users"></div>
+          <label class="remember-me-row">
+            <div class="rm-toggle">
+              <input type="checkbox" id="chk-remember" checked>
+              <span class="rm-slider"></span>
+            </div>
+            <span class="rm-label">Remember me on this device</span>
+          </label>
+        </div>
 
         <div class="or-divider">or</div>
-        <button id="btn-new-user" class="btn-ghost-new">+ New here</button>
+        <button id="btn-new-user" class="btn-ghost-new">+ I'm not on the list</button>
       </div>
 
       <!-- Step 2: create user -->

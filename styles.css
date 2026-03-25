@@ -236,6 +236,32 @@ button { cursor: pointer; font-family: var(--fbody); }
 .pm-flag { font-size: 1.6rem; }
 .pm-name { font-size: .8rem; font-weight: 600; color: var(--dim); }
 
+/* Class filter chips (step 1 of onboarding) */
+.filter-zone-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .45rem;
+  margin-bottom: 1.25rem;
+}
+.fzone-chip {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--rs);
+  color: var(--dim);
+  font-family: var(--fhead); font-size: .9rem; font-weight: 700;
+  padding: .8rem .5rem;
+  transition: all .15s ease; text-align: center; cursor: pointer;
+}
+.fzone-chip:active { transform: scale(.97); }
+.fzone-chip.active {
+  background: color-mix(in srgb, var(--zone-color) 14%, transparent);
+  border-color: var(--zone-color);
+  color: var(--zone-color);
+}
+
+/* User list wrap — slides in after class selected */
+#user-list-wrap { animation: fadeUp .2s ease; }
+
 /* Load error */
 .load-error {
   background: rgba(239,68,68,.08);
