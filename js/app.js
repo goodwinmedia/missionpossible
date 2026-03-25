@@ -947,34 +947,44 @@ function showNameEditor() {
   });
 }
 
-function showZonePicker() {
+function showMissionPicker() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
     <div class="modal-card">
-      <h3>Change Zone</h3>
-      <div class="zone-picker" id="zone-picker-modal">
-        ${ZONES.map(z => `
-          <button class="zone-chip ${z.id === state.user.zone_id ? 'active' : ''}"
-            data-zone-id="${z.id}" style="--zone-color:${z.color}">${z.name}</button>`).join('')}
-      </div>
-      <button class="btn-secondary" id="modal-cancel">Cancel</button>
+      <h3>Change Mission</h3>
+      <p style="color:var(--dim);font-size:.85rem;margin:-.25rem 0 .75rem">Pick where you'd serve</p>
+      <div class="mission-picker" id="mission-picker-modal"></div>
+      <button class="btn-secondary" id="modal-cancel-mission" style="margin-top:.75rem">Cancel</button>
     </div>`;
 
   document.body.appendChild(overlay);
-  overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
-  overlay.querySelectorAll('.zone-chip').forEach(btn => {
+
+  const current = state.user.mission;
+  const picker  = overlay.querySelector('#mission-picker-modal');
+  picker.innerHTML = MISSIONS.map((m, i) =>
+    `<button class="mission-chip ${current === `${m.flag} ${m.name}` ? 'active' : ''}"
+      data-mission="${m.flag} ${m.name}" data-idx="${i}">
+      <span class="mflag">${m.flag}</span>
+      <span class="mname">${m.name}</span>
+    </button>`
+  ).join('');
+
+  overlay.querySelector('#modal-cancel-mission').addEventListener('click', () => overlay.remove());
+
+  picker.querySelectorAll('.mission-chip').forEach(btn => {
     btn.addEventListener('click', async () => {
+      const mission = btn.dataset.mission;
       try {
-        const zoneId = parseInt(btn.dataset.zoneId);
-        await db.updateUserZone(state.user.id, zoneId);
-        state.user.zone_id = zoneId;
+        await db.updateUserMission(state.user.id, mission);
+        state.user.mission = mission;
+        state.allUsers = state.allUsers.map(u => u.id === state.user.id ? { ...u, mission } : u);
         const savedUser = JSON.stringify(state.user);
         if (localStorage.getItem('mp_user'))   localStorage.setItem('mp_user', savedUser);
         else                                    sessionStorage.setItem('mp_user', savedUser);
         overlay.remove();
         renderProfile();
-        showToast('Zone updated!', 'success');
+        showToast('Mission updated! 🌍', 'success');
       } catch (_) { showToast('Update failed', 'error'); }
     });
   });
@@ -1034,7 +1044,7 @@ function bindEvents() {
   });
 
   document.getElementById('btn-edit-name').addEventListener('click', showNameEditor);
-  document.getElementById('btn-change-zone').addEventListener('click', showZonePicker);
+  document.getElementById('btn-change-mission').addEventListener('click', showMissionPicker);
 
   document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('mp_user');

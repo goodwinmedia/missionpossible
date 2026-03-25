@@ -36,6 +36,11 @@ export async function updateUserName(userId, name) {
   if (error) throw error;
 }
 
+export async function updateUserMission(userId, mission) {
+  const { error } = await getClient().from('users').update({ mission }).eq('id', userId);
+  if (error) throw error;
+}
+
 export async function adminDeleteUser(userId) {
   const { error } = await getClient().from('users').delete().eq('id', userId);
   if (error) throw error;
