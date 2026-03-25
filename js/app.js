@@ -1,6 +1,6 @@
 import { PROGRAM_START, ADMIN_CODE } from './config.js';
 import {
-  ZONES, CATEGORIES, DAILY_HABITS, WEEKLY_CHALLENGES, BONUS_CHALLENGES, ALL_HABITS,
+  ZONES, MISSIONS, CATEGORIES, DAILY_HABITS, WEEKLY_CHALLENGES, BONUS_CHALLENGES, ALL_HABITS,
   getHabitById, getZoneById, getWeekNumber, getWeekStart,
 } from './data.js';
 import * as db from './db.js';
@@ -170,11 +170,15 @@ function renderOnboarding() {
   } else {
     list.innerHTML = state.allUsers.map(u => {
       const zone = ZONES.find(z => z.id === u.zone_id);
+      const missionFlag = u.mission ? u.mission.split(' ')[0] : '🌍';
       return `
         <button class="user-chip" data-id="${u.id}" style="border-color:${zone?.color || '#6b7280'}44">
           <span class="user-chip-avatar" style="background:${zone?.color || '#6b7280'}">${getInitials(u.name)}</span>
-          <span class="user-chip-name">${u.name}</span>
-          <span class="user-chip-zone" style="color:${zone?.color || '#94a3b8'}">${zone?.name || ''}</span>
+          <div class="user-chip-info">
+            <span class="user-chip-name">${u.name}</span>
+            <span class="user-chip-zone" style="color:${zone?.color || '#94a3b8'}">${zone?.name || ''}</span>
+          </div>
+          <span class="user-chip-mission">${missionFlag}</span>
         </button>`;
     }).join('');
 
@@ -196,6 +200,7 @@ function renderOnboarding() {
   ).join('');
 
   let selectedZoneId = null;
+  let selectedMission = null;
 
   zonePicker.querySelectorAll('.zone-chip').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -206,11 +211,29 @@ function renderOnboarding() {
     });
   });
 
+  // Mission picker
+  const missionPicker = document.getElementById('mission-picker');
+  missionPicker.innerHTML = MISSIONS.map((m, i) =>
+    `<button class="mission-chip" data-mission="${m.flag} ${m.name}" data-idx="${i}">
+      <span class="mflag">${m.flag}</span>
+      <span class="mname">${m.name}</span>
+    </button>`
+  ).join('');
+
+  missionPicker.querySelectorAll('.mission-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      missionPicker.querySelectorAll('.mission-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedMission = btn.dataset.mission;
+      checkJoinReady();
+    });
+  });
+
   const nameInput = document.getElementById('input-name');
   nameInput.addEventListener('input', checkJoinReady);
 
   function checkJoinReady() {
-    document.getElementById('btn-join').disabled = !nameInput.value.trim() || !selectedZoneId;
+    document.getElementById('btn-join').disabled = !nameInput.value.trim() || !selectedZoneId || !selectedMission;
   }
 
   document.getElementById('btn-new-user').addEventListener('click', () => {
@@ -236,12 +259,17 @@ function renderOnboarding() {
 
     document.getElementById('loading-screen').classList.remove('hidden');
     try {
-      const user = await db.createUser(name, selectedZoneId);
+      const user = await db.createUser(name, selectedZoneId, selectedMission);
       state.allUsers.push(user);
       await loginUser(user);
-    } catch (_) {
+    } catch (e) {
       document.getElementById('loading-screen').classList.add('hidden');
-      showToast('Could not create account. Try again.', 'error');
+      const msg = e?.message || '';
+      if (msg.includes('duplicate') || msg.includes('unique')) {
+        showToast('That name is already taken!', 'error');
+      } else {
+        showToast(`Error: ${msg || 'Could not create account'}`, 'error');
+      }
     }
   });
 }
@@ -651,6 +679,19 @@ function renderProfile() {
   avatar.style.background = zone?.color || '#6b7280';
 
   document.getElementById('profile-name').textContent = state.user.name;
+
+  // Mission display
+  const missionFlag = state.user.mission ? state.user.mission.split(' ')[0] : '🌍';
+  const missionName = state.user.mission ? state.user.mission.split(' ').slice(1).join(' ') : 'No Mission';
+  let missionEl = document.getElementById('profile-mission');
+  if (!missionEl) {
+    missionEl = document.createElement('div');
+    missionEl.id = 'profile-mission';
+    missionEl.className = 'profile-mission';
+    document.getElementById('profile-name').after(missionEl);
+  }
+  missionEl.innerHTML = `<span class="pm-flag">${missionFlag}</span><span class="pm-name">${missionName} Mission</span>`;
+
   const badge = document.getElementById('profile-zone-badge');
   badge.textContent = zone?.name || 'No Zone';
   badge.style.cssText = `background:${zone?.color || '#6b7280'}18;color:${zone?.color || '#94a3b8'};border-color:${zone?.color || '#6b7280'}44`;

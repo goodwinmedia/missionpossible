@@ -19,9 +19,9 @@ export async function getAllUsers() {
   return data;
 }
 
-export async function createUser(name, zone_id) {
+export async function createUser(name, zone_id, mission = null) {
   const { data, error } = await getClient()
-    .from('users').insert({ name: name.trim(), zone_id }).select('*').single();
+    .from('users').insert({ name: name.trim(), zone_id, mission }).select('*').single();
   if (error) throw error;
   return data;
 }
