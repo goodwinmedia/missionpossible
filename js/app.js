@@ -795,7 +795,7 @@ async function toggleSpecialHabit(habitId) {
   } else {
     state.myEntries.push({ habit_id: habitId, date: today, category: habit.category, points: habit.points, type: habit.type, user_id: state.user.id });
   }
-  updateStats();
+  updateHeader();
   renderHome();
 
   try {
@@ -806,12 +806,13 @@ async function toggleSpecialHabit(habitId) {
     }
     // Refresh state silently — no re-render needed (optimistic already correct)
     state.myEntries = await db.getEntriesForUser(state.user.id);
-    updateStats();
+    state.allEntries = await db.getAllEntries();
+    updateHeader();
   } catch (err) {
     console.error('toggleSpecialHabit error:', err);
     // Revert optimistic update
     state.myEntries = await db.getEntriesForUser(state.user.id).catch(() => state.myEntries);
-    updateStats();
+    updateHeader();
     renderHome();
     showToast('Save failed', 'error');
   }
