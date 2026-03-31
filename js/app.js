@@ -86,6 +86,7 @@ const state = {
   logSelections: {},
   logSelectionsDate: null,
   adminTaps: 0,
+  homeFilter: null,   // null | category key | 'extra' | 'bonus'
 };
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -381,7 +382,10 @@ function renderHome() {
 
 function renderRings(completedIds, date) {
   const container = document.getElementById('rings-grid');
-  container.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
+  const today = todayISO();
+
+  // 4 category tiles
+  const catTiles = Object.entries(CATEGORIES).map(([key, cat]) => {
     const habits = DAILY_HABITS.filter(h => h.category === key);
     const done = habits.filter(h => completedIds.has(h.id)).length;
     const total = habits.length;
@@ -389,9 +393,10 @@ function renderRings(completedIds, date) {
     const r = 27;
     const circ = 2 * Math.PI * r;
     const dash = (pct * circ).toFixed(2);
+    const active = state.homeFilter === key;
 
     return `
-      <div class="ring-card">
+      <div class="ring-card ${active ? 'active' : ''}" data-filter="${key}" style="${active ? `--ring-active:${cat.color}` : ''}">
         <div class="ring-wrapper">
           <svg class="ring-svg" viewBox="0 0 64 64">
             <circle cx="32" cy="32" r="${r}" fill="none" stroke="${cat.color}22" stroke-width="5.5"/>
@@ -405,6 +410,61 @@ function renderRings(completedIds, date) {
         <div class="ring-progress" style="color:${cat.color}">${done}/${total}</div>
       </div>`;
   }).join('');
+
+  // Extra Credit tile
+  const ecDone  = EXTRA_CREDIT.filter(h => state.myEntries.some(e => e.habit_id === h.id)).length;
+  const ecTotal = EXTRA_CREDIT.length;
+  const ecPct   = ecTotal ? ecDone / ecTotal : 0;
+  const r = 27, circ = (2 * Math.PI * r);
+  const ecDash  = (ecPct * circ).toFixed(2);
+  const ecActive = state.homeFilter === 'extra';
+
+  const ecTile = `
+    <div class="ring-card ${ecActive ? 'active' : ''}" data-filter="extra" style="${ecActive ? '--ring-active:#f59e0b' : ''}">
+      <div class="ring-wrapper">
+        <svg class="ring-svg" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="${r}" fill="none" stroke="#f59e0b22" stroke-width="5.5"/>
+          <circle cx="32" cy="32" r="${r}" fill="none" stroke="#f59e0b" stroke-width="5.5"
+            stroke-dasharray="${ecDash} ${circ.toFixed(2)}" stroke-linecap="round"
+            transform="rotate(-90 32 32)" style="transition:stroke-dasharray .6s ease"/>
+        </svg>
+        <i data-lucide="star" class="ring-icon" style="color:#f59e0b"></i>
+      </div>
+      <div class="ring-label">Extra Credit</div>
+      <div class="ring-progress" style="color:#f59e0b">${ecDone}/${ecTotal}</div>
+    </div>`;
+
+  // Bonus Tasks tile
+  const btDoneToday = BONUS_TASKS.filter(h => state.myEntries.some(e => e.habit_id === h.id && e.date === today)).length;
+  const btTotal     = BONUS_TASKS.length;
+  const btPct       = btTotal ? btDoneToday / btTotal : 0;
+  const btDash      = (btPct * circ).toFixed(2);
+  const btActive    = state.homeFilter === 'bonus';
+
+  const btTile = `
+    <div class="ring-card ${btActive ? 'active' : ''}" data-filter="bonus" style="${btActive ? '--ring-active:#10b981' : ''}">
+      <div class="ring-wrapper">
+        <svg class="ring-svg" viewBox="0 0 64 64">
+          <circle cx="32" cy="32" r="${r}" fill="none" stroke="#10b98122" stroke-width="5.5"/>
+          <circle cx="32" cy="32" r="${r}" fill="none" stroke="#10b981" stroke-width="5.5"
+            stroke-dasharray="${btDash} ${circ.toFixed(2)}" stroke-linecap="round"
+            transform="rotate(-90 32 32)" style="transition:stroke-dasharray .6s ease"/>
+        </svg>
+        <i data-lucide="repeat" class="ring-icon" style="color:#10b981"></i>
+      </div>
+      <div class="ring-label">Bonus Tasks</div>
+      <div class="ring-progress" style="color:#10b981">${btDoneToday}/${btTotal} today</div>
+    </div>`;
+
+  container.innerHTML = catTiles + ecTile + btTile;
+
+  container.querySelectorAll('.ring-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const f = card.dataset.filter;
+      state.homeFilter = state.homeFilter === f ? null : f;
+      renderHome();
+    });
+  });
 
   if (window.lucide) lucide.createIcons();
 }
@@ -441,7 +501,19 @@ function renderChallengeStrip(completedIds, week) {
 
 function renderHomeHabits(completedIds, today) {
   const container = document.getElementById('today-habits-list');
-  container.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
+  const f = state.homeFilter;
+
+  // Hide the daily habits list when filtering to extra/bonus only
+  if (f === 'extra' || f === 'bonus') {
+    container.innerHTML = '';
+    return;
+  }
+
+  const categoriesToShow = f
+    ? Object.entries(CATEGORIES).filter(([key]) => key === f)
+    : Object.entries(CATEGORIES);
+
+  container.innerHTML = categoriesToShow.map(([key, cat]) => {
     const habits = DAILY_HABITS.filter(h => h.category === key);
     const rows = habits.map(h => {
       const done = completedIds.has(h.id);
@@ -472,21 +544,29 @@ function renderExtraCreditHome() {
   const container = document.getElementById('extra-credit-home');
   if (!container) return;
 
+  const f     = state.homeFilter;
   const today = todayISO();
 
-  const ecEarned   = EXTRA_CREDIT.filter(h => state.myEntries.some(e => e.habit_id === h.id));
-  const ecTotal    = EXTRA_CREDIT.reduce((s, h) => s + h.points, 0);
+  const showExtra = !f || f === 'extra';
+  const showBonus = !f || f === 'bonus';
+
+  if (!showExtra && !showBonus) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const ecEarned    = EXTRA_CREDIT.filter(h => state.myEntries.some(e => e.habit_id === h.id));
+  const ecTotalPts  = EXTRA_CREDIT.reduce((s, h) => s + h.points, 0);
   const ecEarnedPts = ecEarned.reduce((s, h) => s + h.points, 0);
 
   const btTodayPts = BONUS_TASKS.reduce((s, h) => {
-    const count = state.myEntries.filter(e => e.habit_id === h.id).length;
-    return s + count * h.points;
+    return s + state.myEntries.filter(e => e.habit_id === h.id).length * h.points;
   }, 0);
 
-  container.innerHTML = `
+  const ecSection = showExtra ? `
     <div class="section-head" style="margin-top:1.25rem">
       <span class="section-title"><i data-lucide="star" class="icon-sm" style="color:#f59e0b;margin-right:4px"></i>Extra Credit</span>
-      <span class="section-tap-hint">${ecEarnedPts} / ${ecTotal} pts</span>
+      <span class="section-tap-hint">${ecEarnedPts} / ${ecTotalPts} pts</span>
     </div>
     <div class="ec-home-list">
       ${EXTRA_CREDIT.map(h => {
@@ -499,7 +579,9 @@ function renderExtraCreditHome() {
           </div>`;
       }).join('')}
       <p class="ec-hint">Log one-time extra credit in the <strong>Log</strong> tab</p>
-    </div>
+    </div>` : '';
+
+  const btSection = showBonus ? `
     <div class="section-head" style="margin-top:1.25rem">
       <span class="section-title"><i data-lucide="repeat" class="icon-sm" style="color:#10b981;margin-right:4px"></i>Bonus Tasks</span>
       <span class="section-tap-hint">${btTodayPts} pts earned total</span>
@@ -516,7 +598,9 @@ function renderExtraCreditHome() {
           </div>`;
       }).join('')}
       <p class="ec-hint">Repeatable daily — log them in the <strong>Log</strong> tab</p>
-    </div>`;
+    </div>` : '';
+
+  container.innerHTML = ecSection + btSection;
   if (window.lucide) lucide.createIcons();
 }
 

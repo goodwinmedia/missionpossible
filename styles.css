@@ -481,13 +481,18 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .greeting-sub { color: var(--dim); font-size: .8rem; margin-top: .2rem; }
 
-/* Rings — single row, 4 columns */
+/* Rings — horizontally scrollable row */
 .rings-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
   gap: .5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: .25rem;
   margin-bottom: 1.1rem;
 }
+.rings-grid::-webkit-scrollbar { display: none; }
 .ring-card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -495,6 +500,15 @@ button { cursor: pointer; font-family: var(--fbody); }
   padding: .75rem .4rem;
   text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  flex: 0 0 calc(25% - .375rem);
+  min-width: 72px;
+  scroll-snap-align: start;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.ring-card.active {
+  border-color: var(--ring-active, var(--accent));
+  background: color-mix(in srgb, var(--ring-active, var(--accent)) 12%, var(--card));
 }
 .ring-wrapper {
   position: relative; width: 64px; height: 64px;
