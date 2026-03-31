@@ -81,7 +81,6 @@ const state = {
   myEntries: [],
   allEntries: [],
   currentView: 'home',
-  lbTab: 'zones',
   logDate: todayISO(),
   logSelections: {},
   logSelectionsDate: null,
@@ -865,7 +864,6 @@ async function submitLog() {
 // ── LEADERBOARD VIEW ──────────────────────────────────────────────────────────
 
 function renderLeaderboard() {
-  renderZoneLeaderboard();
   renderPeopleLeaderboard();
 }
 
@@ -878,36 +876,13 @@ function aggregateData() {
   const people = state.allUsers
     .filter(u => state.zoneActive[u.zone_id] !== false)
     .map(u => ({
-    ...u,
-    zone: ZONES.find(z => z.id === u.zone_id),
-    points: userPoints[u.id] || 0,
-    isMe: u.id === state.user?.id,
-  })).sort((a, b) => b.points - a.points);
+      ...u,
+      zone: ZONES.find(z => z.id === u.zone_id),
+      points: userPoints[u.id] || 0,
+      isMe: u.id === state.user?.id,
+    })).sort((a, b) => b.points - a.points);
 
-  const zones = ZONES.filter(z => state.zoneActive[z.id] !== false).map(z => {
-    const members = people.filter(p => p.zone_id === z.id);
-    return { ...z, members, total: members.reduce((s, p) => s + p.points, 0) };
-  }).sort((a, b) => b.total - a.total);
-
-  return { people, zones };
-}
-
-function renderZoneLeaderboard() {
-  const { zones } = aggregateData();
-  const max = Math.max(...zones.map(z => z.total), 1);
-
-  document.getElementById('lb-zones').innerHTML = zones.map((z, i) => `
-    <div class="lb-zone-card ${i === 0 ? 'first-place' : ''}">
-      <div class="lb-zone-row">
-        <div class="lb-rank ${i === 0 ? 'rank-gold' : ''}">${i + 1}</div>
-        <div class="lb-zone-name" style="color:${z.color}">${z.name}</div>
-        <div class="lb-zone-pts">${z.total}<span>pts</span></div>
-      </div>
-      <div class="lb-bar-track">
-        <div class="lb-bar-fill" style="width:${(z.total / max * 100).toFixed(1)}%;background:${z.color}"></div>
-      </div>
-      <div class="lb-zone-meta">${z.members.length} member${z.members.length !== 1 ? 's' : ''}</div>
-    </div>`).join('');
+  return { people };
 }
 
 function renderPeopleLeaderboard() {
@@ -1271,20 +1246,6 @@ function bindEvents() {
   });
 
   document.getElementById('btn-submit-log').addEventListener('click', submitLog);
-
-  document.getElementById('tab-zones').addEventListener('click', () => {
-    document.getElementById('tab-zones').classList.add('active');
-    document.getElementById('tab-people').classList.remove('active');
-    document.getElementById('lb-zones').classList.remove('hidden');
-    document.getElementById('lb-people').classList.add('hidden');
-  });
-
-  document.getElementById('tab-people').addEventListener('click', () => {
-    document.getElementById('tab-people').classList.add('active');
-    document.getElementById('tab-zones').classList.remove('active');
-    document.getElementById('lb-people').classList.remove('hidden');
-    document.getElementById('lb-zones').classList.add('hidden');
-  });
 
   document.getElementById('btn-edit-name').addEventListener('click', showNameEditor);
   document.getElementById('btn-change-mission').addEventListener('click', showMissionPicker);
