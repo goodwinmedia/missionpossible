@@ -529,7 +529,8 @@ function renderChallengeStrip(completedIds, week) {
   );
 
   const bonus = BONUS_CHALLENGES.find(b => b.week === week);
-  const items = [...WEEKLY_CHALLENGES, ...(bonus ? [bonus] : [])];
+  const isSunday = new Date().getDay() === 0;
+  const items = [...WEEKLY_CHALLENGES.filter(h => !h.sundayOnly || isSunday), ...(bonus ? [bonus] : [])];
 
   const pills = items.map(h => {
     const cat = CATEGORIES[h.category];
@@ -755,6 +756,7 @@ function renderLogHabits() {
   const date = state.logDate;
   const week = getWeekNumber(date, PROGRAM_START);
   const weekStart = getWeekStart(date);
+  const isSunday = new Date(date + 'T12:00:00').getDay() === 0;
 
   // Initialize selections when date changes
   if (state.logSelectionsDate !== date) {
@@ -762,6 +764,7 @@ function renderLogHabits() {
     state.logSelections = {};
     const habits = [...DAILY_HABITS, ...WEEKLY_CHALLENGES, ...BONUS_CHALLENGES.filter(b => b.week === week)];
     habits.forEach(h => {
+      if (h.sundayOnly && !isSunday) return; // skip non-Sunday habits on other days
       if (h.type === 'daily') {
         state.logSelections[h.id] = state.myEntries.some(e => e.habit_id === h.id && e.date === date);
       } else {
@@ -803,7 +806,7 @@ function renderLogHabits() {
 
     const rows = [
       ...daily.map(h => renderRow(h)),
-      weekly  ? renderRow(weekly,  'Weekly · 5pts') : '',
+      weekly  && !(weekly.sundayOnly && !isSunday)  ? renderRow(weekly,  'Weekly · 5pts') : '',
       bonusH  ? renderRow(bonusH, `Week ${bonusH.week} Bonus · 10pts`) : '',
     ].join('');
 
@@ -886,9 +889,10 @@ async function submitLog() {
   const weekStart = getWeekStart(date);
   const toAdd = [], toDeleteIds = [];
 
+  const isSunday = new Date(date + 'T12:00:00').getDay() === 0;
   const habitsForDate = [
     ...DAILY_HABITS,
-    ...WEEKLY_CHALLENGES,
+    ...WEEKLY_CHALLENGES.filter(h => !h.sundayOnly || isSunday),
     ...BONUS_CHALLENGES.filter(b => b.week === week),
     ...EXTRA_CREDIT,
     ...BONUS_TASKS,

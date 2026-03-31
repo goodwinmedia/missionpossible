@@ -65,7 +65,7 @@ export const DAILY_HABITS = [
 ];
 
 export const WEEKLY_CHALLENGES = [
-  { id: 'w1', category: 'spiritual', label: 'Attend Church (both hours)',                            points: 5, type: 'weekly' },
+  { id: 'w1', category: 'spiritual', label: 'Attend Church (both hours)', points: 5, type: 'weekly', sundayOnly: true },
   { id: 'w2', category: 'physical',  label: 'Do own laundry OR help cook/clean 2 meals',             points: 5, type: 'weekly' },
   { id: 'w3', category: 'social',    label: 'Open doors, smile & intentionally say "hi" all week',  points: 5, type: 'weekly' },
   { id: 'w4', category: 'emotional', label: 'Mindset Reset — any 3 days this week',                  points: 5, type: 'weekly' },
