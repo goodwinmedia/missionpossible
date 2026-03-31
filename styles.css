@@ -654,6 +654,7 @@ button { cursor: pointer; font-family: var(--fbody); }
 .log-tag.weekly { color: #f59e0b; }
 .log-tag.bonus  { color: #ec4899; }
 .log-tag.extra  { color: #f59e0b; }
+.log-tag.repeat { color: #10b981; }
 .log-pts { font-family: var(--fhead); font-size: .78rem; font-weight: 700; flex-shrink: 0; }
 
 .log-submit-wrap {

@@ -80,22 +80,47 @@ export const BONUS_CHALLENGES = [
 
 export const ALL_HABITS = [...DAILY_HABITS, ...WEEKLY_CHALLENGES, ...BONUS_CHALLENGES];
 
+// ── ONE-TIME EXTRA CREDIT ─────────────────────────────────
 export const EXTRA_CREDIT = [
-  { id: 'e1',  category: 'spiritual', label: 'Memorize the missionary purpose',                              points: 15, type: 'extra' },
-  { id: 'e2',  category: 'spiritual', label: '"Becoming a Missionary" — Elder Bednar (Oct 2005 GC)',          points: 10, type: 'extra' },
-  { id: 'e3',  category: 'spiritual', label: 'Preach My Gospel — Chapter 1',                                  points: 5,  type: 'extra' },
-  { id: 'e4',  category: 'spiritual', label: 'Preach My Gospel — Chapter 2',                                  points: 5,  type: 'extra' },
-  { id: 'e5',  category: 'spiritual', label: 'Preach My Gospel — Chapter 3',                                  points: 5,  type: 'extra' },
-  { id: 'e6',  category: 'spiritual', label: 'Preach My Gospel — Chapter 4',                                  points: 5,  type: 'extra' },
-  { id: 'e7',  category: 'spiritual', label: 'Preach My Gospel — Chapter 5',                                  points: 5,  type: 'extra' },
-  { id: 'e8',  category: 'spiritual', label: 'Preach My Gospel — Chapter 6',                                  points: 5,  type: 'extra' },
-  { id: 'e9',  category: 'spiritual', label: '"Fourth Floor, Last Door" — Pres. Uchtdorf (Oct 2016 GC)',      points: 10, type: 'extra' },
-  { id: 'e10', category: 'spiritual', label: '"Hope of Israel" — Pres. Nelson Youth Devotional (Jun 2018)',   points: 10, type: 'extra' },
-  { id: 'e11', category: 'spiritual', label: 'Memorize D&C 4',                                                points: 15, type: 'extra' },
+  // Memorization
+  { id: 'e1',  category: 'spiritual', label: 'Memorize the missionary purpose',                            points: 15, type: 'extra' },
+  { id: 'e11', category: 'spiritual', label: 'Memorize D&C 4',                                              points: 15, type: 'extra' },
+  // Preach My Gospel chapters
+  { id: 'e3',  category: 'spiritual', label: 'Preach My Gospel — Chapter 1',                                points: 5,  type: 'extra' },
+  { id: 'e4',  category: 'spiritual', label: 'Preach My Gospel — Chapter 2',                                points: 5,  type: 'extra' },
+  { id: 'e5',  category: 'spiritual', label: 'Preach My Gospel — Chapter 3',                                points: 5,  type: 'extra' },
+  { id: 'e6',  category: 'spiritual', label: 'Preach My Gospel — Chapter 4',                                points: 5,  type: 'extra' },
+  { id: 'e7',  category: 'spiritual', label: 'Preach My Gospel — Chapter 5',                                points: 5,  type: 'extra' },
+  { id: 'e8',  category: 'spiritual', label: 'Preach My Gospel — Chapter 6',                                points: 5,  type: 'extra' },
+  // GC talks
+  { id: 'e2',  category: 'spiritual', label: '"Becoming a Missionary" — Elder Bednar (Oct 2005 GC)',        points: 10, type: 'extra' },
+  { id: 'e9',  category: 'spiritual', label: '"Fourth Floor, Last Door" — Pres. Uchtdorf (Oct 2016 GC)',   points: 10, type: 'extra' },
+  { id: 'e10', category: 'spiritual', label: '"Hope of Israel" — Pres. Nelson Youth Devotional (Jun 2018)', points: 10, type: 'extra' },
+  // Special challenges
+  { id: 'e12', category: 'spiritual', label: 'Go to the Temple',                                            points: 15, type: 'extra' },
+  { id: 'e13', category: 'spiritual', label: 'Give a Book of Mormon to someone',                            points: 15, type: 'extra' },
+  { id: 'e14', category: 'spiritual', label: 'Share your testimony',                                        points: 10, type: 'extra' },
+  { id: 'e15', category: 'social',    label: 'Invite a friend to church or a church activity',              points: 10, type: 'extra' },
+  { id: 'e16', category: 'spiritual', label: 'Fast for a full day with a purpose',                          points: 10, type: 'extra' },
+  { id: 'e17', category: 'social',    label: 'Teach or lead a Family Home Evening lesson',                  points: 10, type: 'extra' },
+  { id: 'e18', category: 'social',    label: 'Volunteer 2+ hours of community service',                     points: 15, type: 'extra' },
+];
+
+// ── REPEATABLE BONUS TASKS ────────────────────────────────
+export const BONUS_TASKS = [
+  { id: 'r1', category: 'physical',  label: 'Iron a shirt',                                    points: 2, type: 'repeat' },
+  { id: 'r2', category: 'social',    label: 'Make a meal for your family',                      points: 2, type: 'repeat' },
+  { id: 'r3', category: 'spiritual', label: 'Listen to 10 mins of church music',                points: 2, type: 'repeat' },
+  { id: 'r4', category: 'emotional', label: 'Write in your journal',                            points: 2, type: 'repeat' },
+  { id: 'r5', category: 'social',    label: 'Random act of service for someone outside family', points: 2, type: 'repeat' },
+  { id: 'r6', category: 'social',    label: 'Call or visit a grandparent or elderly person',    points: 3, type: 'repeat' },
+  { id: 'r7', category: 'physical',  label: 'Do yard work or deep-clean a room',                points: 2, type: 'repeat' },
 ];
 
 export function getHabitById(id) {
-  return ALL_HABITS.find(h => h.id === id);
+  return ALL_HABITS.find(h => h.id === id)
+    || EXTRA_CREDIT.find(h => h.id === id)
+    || BONUS_TASKS.find(h => h.id === id);
 }
 
 export function getZoneById(id) {
