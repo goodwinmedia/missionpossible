@@ -77,15 +77,15 @@ button { cursor: pointer; font-family: var(--fbody); }
   justify-content: center;
   z-index: 200;
 }
-.loading-inner { text-align: center; animation: fadeUp .5s ease; }
+.loading-inner { width: 100%; text-align: center; }
 .loading-logo {
-  width: clamp(200px, 65vw, 300px);
+  width: 100%;
+  max-width: 480px;
   height: auto;
   display: block;
-  margin: 0 auto 2rem;
-  filter: drop-shadow(0 0 28px rgba(150,50,255,0.6));
+  margin: 0 auto;
 }
-.loading-dots { display: flex; justify-content: center; gap: .4rem; }
+.loading-dots { display: flex; justify-content: center; gap: .4rem; margin-top: 2.5rem; }
 .loading-dots span {
   width: 8px; height: 8px;
   border-radius: 50%;
