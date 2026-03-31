@@ -84,6 +84,7 @@ button { cursor: pointer; font-family: var(--fbody); }
   height: auto;
   display: block;
   margin: 0 auto;
+  mix-blend-mode: screen;
 }
 .loading-dots { display: flex; justify-content: center; gap: .4rem; margin-top: 2.5rem; }
 .loading-dots span {
@@ -170,7 +171,7 @@ button { cursor: pointer; font-family: var(--fbody); }
   height: auto;
   display: block;
   margin: 0 auto .5rem;
-  filter: drop-shadow(0 0 18px rgba(150,50,255,0.5));
+  mix-blend-mode: screen;
 }
 .ob-sub {
   color: var(--dim);
