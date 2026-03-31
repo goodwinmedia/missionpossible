@@ -164,12 +164,12 @@ button { cursor: pointer; font-family: var(--fbody); }
   border-radius: 100px;
   margin-bottom: 1rem;
 }
-.ob-title {
-  font-family: var(--fhead);
-  font-size: clamp(2.2rem, 10vw, 3rem);
-  font-weight: 800;
-  line-height: 1.05;
-  margin-bottom: .75rem;
+.ob-logo {
+  width: clamp(180px, 60vw, 260px);
+  height: auto;
+  display: block;
+  margin: 0 auto .5rem;
+  filter: drop-shadow(0 0 18px rgba(150,50,255,0.5));
 }
 .ob-sub {
   color: var(--dim);
@@ -433,8 +433,11 @@ button { cursor: pointer; font-family: var(--fbody); }
 .streak-num {
   font-family: var(--fhead); font-weight: 700; font-size: .88rem; color: #f59e0b;
 }
-.hdr-title {
-  font-family: var(--fhead); font-size: .95rem; font-weight: 700;
+.hdr-logo {
+  height: 36px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 0 6px rgba(150,50,255,0.4));
 }
 .pts-pill {
   display: flex; align-items: center; gap: .2rem;

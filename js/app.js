@@ -347,9 +347,6 @@ function navigate(view) {
     btn.classList.toggle('active', btn.dataset.view === view)
   );
 
-  const titles = { home: 'Today', log: 'Log Activity', leaderboard: 'Battle Zones', profile: 'My Profile', admin: '🔐 Admin' };
-  document.getElementById('header-view-title').textContent = titles[view] || '';
-
   const hideChrome = view === 'admin';
   document.getElementById('app-header').style.display = hideChrome ? 'none' : 'flex';
   document.getElementById('bottom-nav').style.display  = hideChrome ? 'none' : 'flex';
