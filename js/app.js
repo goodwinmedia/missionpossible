@@ -473,7 +473,7 @@ function renderRings(completedIds, date) {
           <i data-lucide="${cat.icon}" class="ring-icon" style="color:${cat.color}"></i>
         </div>
         <div class="ring-label">${cat.label}</div>
-        <div class="ring-progress" style="color:${cat.color}">${totalPts}pts</div>
+        <div class="ring-progress" style="color:${cat.color}">${done}/${total}</div>
       </div>`;
   }).join('');
 
