@@ -85,6 +85,7 @@ const state = {
   logSelectionsDate: null,
   adminTaps: 0,
   homeFilter: null,
+  homeCollapsed: { extra: false, bonus: false },
   zoneActive: {},
   customHabits: [],   // loaded from DB, merged with static EXTRA_CREDIT / BONUS_TASKS
 };
@@ -600,13 +601,7 @@ function renderHomeHabits(completedIds, today) {
               <div class="habit-check ${done ? 'checked' : ''}" style="${done ? 'background:#f59e0b' : 'border-color:#f59e0b'}">
                 ${done ? '✓' : ''}
               </div>
-              <div style="flex:1;min-width:0">
-                <span class="habit-label">${h.label}</span>
-                <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">
-                  <span class="cat-tag" style="background:${hcat.color}22;color:${hcat.color};border:1px solid ${hcat.color}44">${hcat.label}</span>
-                  <span class="log-tag extra">One-time · ${h.points}pts</span>
-                </div>
-              </div>
+              <span class="habit-label" style="flex:1;min-width:0">${h.label}</span>
               <span class="habit-pts" style="color:#f59e0b">+${h.points}</span>
             </div>`;
         }).join('');
@@ -624,9 +619,8 @@ function renderHomeHabits(completedIds, today) {
               </div>
               <div style="flex:1;min-width:0">
                 <span class="habit-label">${h.label}</span>
-                <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">
-                  <span class="cat-tag" style="background:${hcat.color}22;color:${hcat.color};border:1px solid ${hcat.color}44">${hcat.label}</span>
-                  <span class="log-tag repeat">Repeatable · ${h.points}pts${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
+                <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px">
+                  <span class="log-tag repeat" style="display:inline">Repeatable${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
                 </div>
               </div>
               <span class="habit-pts" style="color:#10b981">+${h.points}</span>
@@ -681,58 +675,98 @@ function renderExtraCreditHome() {
     return s + state.myEntries.filter(e => e.habit_id === h.id).length * h.points;
   }, 0);
 
+  // Helper: render a single special-habit row
+  function ecRow(h, done, cat, extraTag = '') {
+    return `
+      <div class="habit-row tappable special-habit ${done ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:${cat.color}">
+        <div class="habit-check ${done ? 'checked' : ''}" style="${done ? `background:${cat.color}` : `border-color:${cat.color}`}">${done ? '✓' : ''}</div>
+        <div style="flex:1;min-width:0">
+          <span class="habit-label">${h.label}</span>
+          ${extraTag ? `<div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">${extraTag}</div>` : ''}
+        </div>
+        <span class="habit-pts" style="color:${cat.color}">${done ? '✓' : `+${h.points}`}</span>
+      </div>`;
+  }
+
+  // ── Extra Credit: grouped by category ────────────────────────────────────────
+  let ecBody = '';
+  if (showExtra) {
+    const ecCollapsed = state.homeCollapsed.extra;
+    Object.entries(CATEGORIES).forEach(([key, cat]) => {
+      const items = allExtraCredit().filter(h => h.category === key);
+      if (!items.length) return;
+      ecBody += `<div class="cat-group" style="margin-bottom:.5rem">
+        <div class="cat-header" style="color:${cat.color}">
+          <i data-lucide="${cat.icon}" class="icon-sm"></i>${cat.label}
+        </div>
+        ${items.map(h => {
+          const done = state.myEntries.some(e => e.habit_id === h.id);
+          return ecRow(h, done, cat);
+        }).join('')}
+      </div>`;
+    });
+  }
+
+  // ── Bonus Tasks: grouped by category ─────────────────────────────────────────
+  let btBody = '';
+  if (showBonus) {
+    Object.entries(CATEGORIES).forEach(([key, cat]) => {
+      const items = allBonusTasks().filter(h => h.category === key);
+      if (!items.length) return;
+      btBody += `<div class="cat-group" style="margin-bottom:.5rem">
+        <div class="cat-header" style="color:${cat.color}">
+          <i data-lucide="${cat.icon}" class="icon-sm"></i>${cat.label}
+        </div>
+        ${items.map(h => {
+          const timesLogged = state.myEntries.filter(e => e.habit_id === h.id).length;
+          const doneToday   = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
+          const tag = `<span class="log-tag repeat" style="display:inline">Repeatable${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>`;
+          return ecRow(h, doneToday, cat, tag);
+        }).join('')}
+      </div>`;
+    });
+  }
+
+  const ecCollapsed = state.homeCollapsed.extra;
+  const btCollapsed = state.homeCollapsed.bonus;
+
   const ecSection = showExtra ? `
-    <div class="section-head" style="margin-top:1.25rem">
+    <div class="section-head collapsible-head" style="margin-top:1.25rem" data-section="extra">
       <span class="section-title"><i data-lucide="star" class="icon-sm" style="color:#f59e0b;margin-right:4px"></i>Extra Credit</span>
-      <span class="section-tap-hint">${ecEarnedPts} / ${ecTotalPts} pts</span>
+      <span style="display:flex;align-items:center;gap:.5rem">
+        <span class="section-tap-hint">${ecEarnedPts} / ${ecTotalPts} pts</span>
+        <i data-lucide="${ecCollapsed ? 'chevron-down' : 'chevron-up'}" class="icon-sm collapse-chevron" style="color:var(--muted)"></i>
+      </span>
     </div>
-    <div class="ec-home-list">
-      ${allExtraCredit().map(h => {
-        const done = state.myEntries.some(e => e.habit_id === h.id);
-        const cat  = CATEGORIES[h.category];
-        return `
-          <div class="habit-row tappable special-habit ${done ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:${cat.color}">
-            <div class="habit-check ${done ? 'checked' : ''}" style="${done ? `background:${cat.color}` : `border-color:${cat.color}`}">${done ? '✓' : ''}</div>
-            <div style="flex:1;min-width:0">
-              <span class="habit-label">${h.label}</span>
-              <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">
-                <span class="cat-tag" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44">${cat.label}</span>
-                <span class="log-tag extra">One-time · ${h.points}pts</span>
-              </div>
-            </div>
-            <span class="habit-pts" style="color:${cat.color}">${done ? '✓' : `+${h.points}`}</span>
-          </div>`;
-      }).join('')}
-    </div>` : '';
+    <div class="ec-collapse-body ${ecCollapsed ? 'collapsed' : ''}">${ecBody}</div>` : '';
 
   const btSection = showBonus ? `
-    <div class="section-head" style="margin-top:1.25rem">
+    <div class="section-head collapsible-head" style="margin-top:1.25rem" data-section="bonus">
       <span class="section-title"><i data-lucide="repeat" class="icon-sm" style="color:#10b981;margin-right:4px"></i>Bonus Tasks</span>
-      <span class="section-tap-hint">${btTodayPts} pts earned today</span>
+      <span style="display:flex;align-items:center;gap:.5rem">
+        <span class="section-tap-hint">${btTodayPts} pts earned today</span>
+        <i data-lucide="${btCollapsed ? 'chevron-down' : 'chevron-up'}" class="icon-sm collapse-chevron" style="color:var(--muted)"></i>
+      </span>
     </div>
-    <div class="ec-home-list">
-      ${allBonusTasks().map(h => {
-        const timesLogged = state.myEntries.filter(e => e.habit_id === h.id).length;
-        const doneToday   = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
-        const cat         = CATEGORIES[h.category];
-        return `
-          <div class="habit-row tappable special-habit ${doneToday ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:${cat.color}">
-            <div class="habit-check ${doneToday ? 'checked' : ''}" style="${doneToday ? `background:${cat.color}` : `border-color:${cat.color}`}">${doneToday ? '✓' : ''}</div>
-            <div style="flex:1;min-width:0">
-              <span class="habit-label">${h.label}</span>
-              <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">
-                <span class="cat-tag" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44">${cat.label}</span>
-                <span class="log-tag repeat">Repeatable · ${h.points}pts${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
-              </div>
-            </div>
-            <span class="habit-pts" style="color:${cat.color}">${timesLogged > 0 ? `×${timesLogged}` : `+${h.points}`}</span>
-          </div>`;
-      }).join('')}
-    </div>` : '';
+    <div class="ec-collapse-body ${btCollapsed ? 'collapsed' : ''}">${btBody}</div>` : '';
 
   container.innerHTML = ecSection + btSection;
+
+  // Collapse toggle
+  container.querySelectorAll('.collapsible-head').forEach(head => {
+    head.addEventListener('click', () => {
+      const sec = head.dataset.section;
+      state.homeCollapsed[sec] = !state.homeCollapsed[sec];
+      renderExtraCreditHome();
+      if (window.lucide) lucide.createIcons();
+    });
+  });
+
   container.querySelectorAll('.special-habit').forEach(row => {
-    row.addEventListener('click', () => toggleSpecialHabit(row.dataset.habitId));
+    row.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleSpecialHabit(row.dataset.habitId);
+    });
   });
   if (window.lucide) lucide.createIcons();
 }

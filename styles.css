@@ -561,6 +561,14 @@ button { cursor: pointer; font-family: var(--fbody); }
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: .75rem;
 }
+.collapsible-head {
+  cursor: pointer;
+  user-select: none;
+}
+.collapsible-head:active { opacity: .7; }
+.collapse-chevron { flex-shrink: 0; transition: transform .2s; }
+.ec-collapse-body { overflow: hidden; }
+.ec-collapse-body.collapsed { display: none; }
 .section-title {
   font-family: var(--fhead); font-size: 1rem; font-weight: 700;
 }
