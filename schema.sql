@@ -50,8 +50,8 @@ alter table public.users add column if not exists district_role text;
 -- District 2: Leader = Max Neish,       STL = Emily Stucki
 -- District 3: Leader = CJ Gibson,       STL = Anna Connors
 
-UPDATE public.users SET mission='🌍 Adriatic North',              companion='Charlotte Poll',     district='District 1', district_role=null     WHERE name='Ivy Bullock';
-UPDATE public.users SET mission='🌍 Adriatic North',              companion='Ivy Bullock',        district='District 1', district_role=null     WHERE name='Charlotte Poll';
+UPDATE public.users SET mission='🇭🇷 Adriatic North',              companion='Charlotte Poll',     district='District 1', district_role=null     WHERE name='Ivy Bullock';
+UPDATE public.users SET mission='🇭🇷 Adriatic North',              companion='Ivy Bullock',        district='District 1', district_role=null     WHERE name='Charlotte Poll';
 UPDATE public.users SET mission='🇦🇷 Argentina Buenos Aires South', companion='Will Moss',          district='District 1', district_role=null     WHERE name='Brennan Hamilton';
 UPDATE public.users SET mission='🇦🇷 Argentina Buenos Aires South', companion='Brennan Hamilton',   district='District 1', district_role=null     WHERE name='Will Moss';
 UPDATE public.users SET mission='🇦🇺 Australia Brisbane',           companion='Clara Hansen',       district='District 1', district_role=null     WHERE name='Lylah Wobser';
