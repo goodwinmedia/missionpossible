@@ -891,6 +891,38 @@ button { cursor: pointer; font-family: var(--fbody); }
   color: var(--dim); text-transform: uppercase; letter-spacing: .09em;
   margin-bottom: .75rem;
 }
+.admin-section-hint {
+  font-size: .75rem; color: var(--muted); margin: -.4rem 0 .75rem;
+}
+
+/* Zone toggle rows */
+.admin-zone-toggles { display: flex; flex-direction: column; gap: .4rem; }
+.admin-zone-toggle-row {
+  display: flex; align-items: center; gap: .65rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--rs); padding: .65rem .8rem;
+}
+.azt-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.azt-name { flex: 1; font-size: .85rem; font-weight: 600; color: var(--text); }
+
+/* Toggle switch */
+.toggle-switch { position: relative; display: inline-flex; align-items: center; cursor: pointer; flex-shrink: 0; }
+.toggle-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  width: 42px; height: 24px; background: var(--border);
+  border-radius: 12px; position: relative;
+  transition: background .25s;
+}
+.toggle-switch input:checked + .toggle-track { background: var(--accent); }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4);
+  transition: transform .25s;
+}
+.toggle-switch input:checked + .toggle-track .toggle-thumb { transform: translateX(18px); }
 .admin-user-row {
   display: flex; align-items: center; gap: .65rem;
   background: var(--card); border: 1px solid var(--border);

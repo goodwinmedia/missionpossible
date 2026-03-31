@@ -87,12 +87,22 @@ const state = {
   logSelectionsDate: null,
   adminTaps: 0,
   homeFilter: null,   // null | category key | 'extra' | 'bonus'
+  zoneActive: {},     // { [zone_id]: boolean } — loaded from DB
 };
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 async function init() {
   try {
+    // Fetch zone active status early so onboarding + leaderboard can filter
+    try {
+      const zones = await db.getZonesWithStatus();
+      zones.forEach(z => { state.zoneActive[z.id] = z.active !== false; });
+    } catch (_) {
+      // Fall back: treat all zones as active if fetch fails
+      ZONES.forEach(z => { state.zoneActive[z.id] = true; });
+    }
+
     const fromLocal   = localStorage.getItem('mp_user');
     const fromSession = sessionStorage.getItem('mp_user');
     const saved       = fromLocal || fromSession;
@@ -197,7 +207,7 @@ function renderOnboarding() {
       await loadOnboarding();
     });
   } else {
-    filterPicker.innerHTML = ZONES.map(z => `
+    filterPicker.innerHTML = ZONES.filter(z => state.zoneActive[z.id] !== false).map(z => `
       <button class="fzone-chip" data-zone-id="${z.id}" style="--zone-color:${z.color}">
         ${z.name}
       </button>`).join('');
@@ -246,9 +256,9 @@ function renderOnboarding() {
     });
   }
 
-  // Zone picker
+  // Zone picker — only show active zones
   const zonePicker = document.getElementById('zone-picker');
-  zonePicker.innerHTML = ZONES.map(z =>
+  zonePicker.innerHTML = ZONES.filter(z => state.zoneActive[z.id] !== false).map(z =>
     `<button class="zone-chip" data-zone-id="${z.id}" style="--zone-color:${z.color}">${z.name}</button>`
   ).join('');
 
@@ -865,14 +875,16 @@ function aggregateData() {
     userPoints[e.user_id] = (userPoints[e.user_id] || 0) + e.points;
   });
 
-  const people = state.allUsers.map(u => ({
+  const people = state.allUsers
+    .filter(u => state.zoneActive[u.zone_id] !== false)
+    .map(u => ({
     ...u,
     zone: ZONES.find(z => z.id === u.zone_id),
     points: userPoints[u.id] || 0,
     isMe: u.id === state.user?.id,
   })).sort((a, b) => b.points - a.points);
 
-  const zones = ZONES.map(z => {
+  const zones = ZONES.filter(z => state.zoneActive[z.id] !== false).map(z => {
     const members = people.filter(p => p.zone_id === z.id);
     return { ...z, members, total: members.reduce((s, p) => s + p.points, 0) };
   }).sort((a, b) => b.total - a.total);
@@ -996,13 +1008,33 @@ async function renderAdmin() {
   container.innerHTML = '<div class="admin-loading">Loading…</div>';
 
   try {
-    const [users, entries] = await Promise.all([db.getAllUsers(), db.getAllEntries()]);
-    state.allUsers  = users;
+    const [users, entries, zones] = await Promise.all([
+      db.getAllUsers(), db.getAllEntries(), db.getZonesWithStatus(),
+    ]);
+    state.allUsers   = users;
     state.allEntries = entries;
+    zones.forEach(z => { state.zoneActive[z.id] = z.active !== false; });
+
     const userPts = {};
     entries.forEach(e => { userPts[e.user_id] = (userPts[e.user_id] || 0) + e.points; });
 
     container.innerHTML = `
+      <div class="admin-section">
+        <h3>Classes</h3>
+        <p class="admin-section-hint">Toggle a class to show/hide it in sign-up and the leaderboard.</p>
+        <div class="admin-zone-toggles">
+          ${zones.map(z => `
+            <div class="admin-zone-toggle-row">
+              <span class="azt-dot" style="background:${z.color}"></span>
+              <span class="azt-name">${z.name}</span>
+              <label class="toggle-switch">
+                <input type="checkbox" class="zone-toggle-cb" data-zone-id="${z.id}" ${z.active !== false ? 'checked' : ''}>
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              </label>
+            </div>`).join('')}
+        </div>
+      </div>
+
       <div class="admin-section">
         <h3>Users (${users.length})</h3>
         ${users.map(u => {
@@ -1042,6 +1074,21 @@ async function renderAdmin() {
       <div class="admin-export">
         <button class="btn-secondary" id="btn-export">Export JSON</button>
       </div>`;
+
+    container.querySelectorAll('.zone-toggle-cb').forEach(cb => {
+      cb.addEventListener('change', async () => {
+        const id = parseInt(cb.dataset.zoneId);
+        const active = cb.checked;
+        try {
+          await db.setZoneActive(id, active);
+          state.zoneActive[id] = active;
+          showToast(`${ZONES.find(z => z.id === id)?.name} ${active ? 'enabled' : 'disabled'}`, 'success');
+        } catch (_) {
+          cb.checked = !active; // revert on error
+          showToast('Update failed', 'error');
+        }
+      });
+    });
 
     container.querySelectorAll('.admin-zone-sel').forEach(sel => {
       sel.addEventListener('change', async () => {

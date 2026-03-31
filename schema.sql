@@ -5,21 +5,26 @@
 
 -- ZONES
 create table if not exists public.zones (
-  id    serial primary key,
-  name  text unique not null,
-  color text not null default '#6b7280'
+  id     serial primary key,
+  name   text unique not null,
+  color  text not null default '#6b7280',
+  active boolean not null default true
 );
 
 -- Upsert zones by ID so re-runs safely update names/colors
-insert into public.zones (id, name, color) values
-  (1, 'Deacons',       '#3b82f6'),
-  (2, 'Teachers',      '#10b981'),
-  (3, 'Priests',       '#7c3aed'),
-  (4, 'YW Class 1',    '#ec4899'),
-  (5, 'YW Class 2',    '#f43f5e'),
-  (6, 'YW Class 3',    '#a855f7'),
-  (7, 'Adult Leaders', '#6b7280')
+insert into public.zones (id, name, color, active) values
+  (1, 'Deacons',       '#3b82f6', true),
+  (2, 'Teachers',      '#10b981', true),
+  (3, 'Priests',       '#7c3aed', true),
+  (4, 'YW Class 1',    '#ec4899', true),
+  (5, 'YW Class 2',    '#f43f5e', true),
+  (6, 'YW Class 3',    '#a855f7', true),
+  (7, 'Adult Leaders', '#6b7280', true)
 on conflict (id) do update set name = excluded.name, color = excluded.color;
+-- Note: active is intentionally NOT reset on re-run so admin toggles persist
+
+-- Add active column if table already existed without it
+alter table public.zones add column if not exists active boolean not null default true;
 
 -- Keep sequence in sync after explicit ID inserts
 select setval('public.zones_id_seq', (select max(id) from public.zones));
@@ -62,6 +67,7 @@ alter table public.entries enable row level security;
 
 do $$ begin
   if not exists (select 1 from pg_policies where policyname = 'anon_read_zones'     and tablename = 'zones')   then create policy "anon_read_zones"     on public.zones   for select using (true); end if;
+  if not exists (select 1 from pg_policies where policyname = 'anon_update_zones'   and tablename = 'zones')   then create policy "anon_update_zones"   on public.zones   for update using (true); end if;
   if not exists (select 1 from pg_policies where policyname = 'anon_read_users'     and tablename = 'users')   then create policy "anon_read_users"     on public.users   for select using (true); end if;
   if not exists (select 1 from pg_policies where policyname = 'anon_insert_users'   and tablename = 'users')   then create policy "anon_insert_users"   on public.users   for insert with check (true); end if;
   if not exists (select 1 from pg_policies where policyname = 'anon_update_users'   and tablename = 'users')   then create policy "anon_update_users"   on public.users   for update using (true); end if;

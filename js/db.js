@@ -11,6 +11,19 @@ export function getClient() {
   return _client;
 }
 
+// ── ZONES ─────────────────────────────────────────────────────────────────────
+
+export async function getZonesWithStatus() {
+  const { data, error } = await getClient().from('zones').select('*').order('id');
+  if (error) throw error;
+  return data;
+}
+
+export async function setZoneActive(id, active) {
+  const { error } = await getClient().from('zones').update({ active }).eq('id', id);
+  if (error) throw error;
+}
+
 // ── USERS ────────────────────────────────────────────────────────────────────
 
 export async function getAllUsers() {
