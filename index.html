@@ -188,6 +188,19 @@
             <button id="btn-logout"         class="btn-danger">Switch User</button>
           </div>
 
+          <!-- Customize panel -->
+          <div class="customize-panel">
+            <button class="customize-toggle" id="btn-customize-toggle">
+              <i data-lucide="palette" style="width:15px;height:15px"></i>
+              Customize Colors
+              <i data-lucide="chevron-down" class="cust-chevron" style="width:14px;height:14px;margin-left:auto"></i>
+            </button>
+            <div class="customize-body hidden" id="customize-body">
+              <div class="cust-grid" id="cust-grid"></div>
+              <button class="cust-reset" id="btn-cust-reset">Reset to defaults</button>
+            </div>
+          </div>
+
           <div class="admin-link">
             <button class="btn-text-admin" onclick="window.promptAdmin()">Admin</button>
           </div>

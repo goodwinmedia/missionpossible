@@ -21,6 +21,11 @@
   --fbody:     'Inter', sans-serif;
   --r:         16px;
   --rs:        10px;
+  /* category colours — overridden by user theme prefs */
+  --color-spiritual: #f59e0b;
+  --color-physical:  #10b981;
+  --color-social:    #60a5fa;
+  --color-emotional: #a855f7;
 }
 
 /* ── NEON SABER CANVAS ──────────────────────────────────── */
@@ -854,6 +859,48 @@ button { cursor: pointer; font-family: var(--fbody); }
 
 .profile-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: .7rem; }
 .profile-actions .btn-danger { grid-column: 1 / -1; }
+
+/* ── CUSTOMIZE PANEL ─────────────────────────────────────── */
+.customize-panel {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--rs); overflow: hidden; margin-bottom: .7rem;
+}
+.customize-toggle {
+  width: 100%; display: flex; align-items: center; gap: .55rem;
+  background: none; border: none; color: var(--dim);
+  font-family: var(--fhead); font-size: .82rem; font-weight: 700;
+  padding: .85rem 1rem; cursor: pointer; text-align: left;
+}
+.customize-toggle:hover { color: var(--text); }
+.cust-chevron { transition: transform .25s; }
+.customize-body {
+  border-top: 1px solid var(--border);
+  padding: .75rem 1rem 1rem;
+}
+.customize-body.hidden { display: none; }
+.cust-grid { display: flex; flex-direction: column; gap: .55rem; margin-bottom: .85rem; }
+.cust-row {
+  display: flex; align-items: center; gap: .65rem;
+}
+.cust-icon { color: var(--dim); flex-shrink: 0; }
+.cust-label { flex: 1; font-size: .85rem; font-weight: 500; color: var(--text); }
+.cust-swatch-wrap { position: relative; cursor: pointer; flex-shrink: 0; }
+.cust-swatch {
+  display: block; width: 36px; height: 28px;
+  border-radius: 8px; border: 2px solid rgba(255,255,255,.12);
+  transition: transform .15s;
+}
+.cust-swatch-wrap:hover .cust-swatch { transform: scale(1.1); }
+.cust-color-input {
+  position: absolute; inset: 0; opacity: 0;
+  width: 100%; height: 100%; cursor: pointer; border: none; padding: 0;
+}
+.cust-reset {
+  width: 100%; background: none; border: 1px solid var(--border);
+  color: var(--muted); font-size: .78rem; padding: .5rem;
+  border-radius: var(--rs); cursor: pointer; transition: color .15s, border-color .15s;
+}
+.cust-reset:hover { color: var(--text); border-color: var(--dim); }
 .btn-secondary {
   flex: 1;
   background: var(--card); border: 1.5px solid var(--border);

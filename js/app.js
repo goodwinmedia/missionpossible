@@ -89,9 +89,51 @@ const state = {
   zoneActive: {},     // { [zone_id]: boolean } — loaded from DB
 };
 
+// ── THEME / COLOR PREFS ───────────────────────────────────────────────────────
+
+const DEFAULT_THEME = {
+  bg:        '#07070e',
+  card:      '#13132a',
+  spiritual: '#f59e0b',
+  physical:  '#10b981',
+  social:    '#60a5fa',
+  emotional: '#a855f7',
+};
+
+function loadTheme() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('mp_theme') || '{}');
+    return { ...DEFAULT_THEME, ...saved };
+  } catch { return { ...DEFAULT_THEME }; }
+}
+
+function applyTheme(prefs) {
+  const root = document.documentElement;
+  root.style.setProperty('--bg',   prefs.bg);
+  root.style.setProperty('--card', prefs.card);
+  // Derive surface/border from card hue (slightly lighter)
+  root.style.setProperty('--surface', prefs.card);
+  root.style.setProperty('--border',  prefs.card + 'cc');
+  root.style.setProperty('--color-spiritual', prefs.spiritual);
+  root.style.setProperty('--color-physical',  prefs.physical);
+  root.style.setProperty('--color-social',    prefs.social);
+  root.style.setProperty('--color-emotional', prefs.emotional);
+  // Sync live CATEGORIES so all inline renders pick up new colors
+  CATEGORIES.spiritual.color = prefs.spiritual;
+  CATEGORIES.physical.color  = prefs.physical;
+  CATEGORIES.social.color    = prefs.social;
+  CATEGORIES.emotional.color = prefs.emotional;
+}
+
+function saveTheme(prefs) {
+  localStorage.setItem('mp_theme', JSON.stringify(prefs));
+}
+
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 async function init() {
+  // Apply saved theme immediately so colors are right from first render
+  applyTheme(loadTheme());
   try {
     // Fetch zone active status early so onboarding + leaderboard can filter
     try {
@@ -963,6 +1005,58 @@ function renderProfile() {
     state.adminTaps = (state.adminTaps || 0) + 1;
     if (state.adminTaps >= 5) { state.adminTaps = 0; promptAdmin(); }
   };
+
+  // ── Customize colors ──────────────────────────────────────
+  const custToggle = document.getElementById('btn-customize-toggle');
+  const custBody   = document.getElementById('customize-body');
+  custToggle.addEventListener('click', () => {
+    custBody.classList.toggle('hidden');
+    custToggle.querySelector('.cust-chevron').style.transform =
+      custBody.classList.contains('hidden') ? '' : 'rotate(180deg)';
+  });
+
+  const theme = loadTheme();
+  const custItems = [
+    { key: 'bg',        label: 'Background',  icon: 'moon'     },
+    { key: 'card',      label: 'Cards',       icon: 'layers'   },
+    { key: 'spiritual', label: 'Spiritual',   icon: 'sun'      },
+    { key: 'physical',  label: 'Physical',    icon: 'activity' },
+    { key: 'social',    label: 'Social',      icon: 'users'    },
+    { key: 'emotional', label: 'Emotional',   icon: 'heart'    },
+  ];
+
+  document.getElementById('cust-grid').innerHTML = custItems.map(item => `
+    <div class="cust-row">
+      <i data-lucide="${item.icon}" class="icon-sm cust-icon"></i>
+      <span class="cust-label">${item.label}</span>
+      <label class="cust-swatch-wrap">
+        <span class="cust-swatch" style="background:${theme[item.key]}"></span>
+        <input type="color" class="cust-color-input" data-key="${item.key}" value="${theme[item.key]}">
+      </label>
+    </div>`).join('');
+
+  document.getElementById('cust-grid').querySelectorAll('.cust-color-input').forEach(input => {
+    const swatch = input.previousElementSibling;
+    input.addEventListener('input', () => {
+      swatch.style.background = input.value;
+      const current = loadTheme();
+      current[input.dataset.key] = input.value;
+      saveTheme(current);
+      applyTheme(current);
+      // Re-render current view so colors apply immediately
+      const v = state.currentView;
+      if (v === 'home') renderHome();
+      else if (v === 'log') renderLogHabits();
+      else if (v === 'leaderboard') renderLeaderboard();
+    });
+  });
+
+  document.getElementById('btn-cust-reset').addEventListener('click', () => {
+    saveTheme(DEFAULT_THEME);
+    applyTheme(DEFAULT_THEME);
+    renderProfile(); // re-render to reset swatches
+    showToast('Colors reset!', 'success');
+  });
 
   if (window.lucide) lucide.createIcons();
 }
