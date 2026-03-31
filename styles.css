@@ -79,11 +79,11 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .loading-inner { width: 100%; text-align: center; }
 .loading-logo {
-  width: 100%;
-  max-width: 480px;
+  width: 100vw;
+  max-width: 100vw;
   height: auto;
   display: block;
-  margin: 0 auto;
+  margin: 0;
   mix-blend-mode: screen;
 }
 .loading-dots { display: flex; justify-content: center; gap: .4rem; margin-top: 2.5rem; }
