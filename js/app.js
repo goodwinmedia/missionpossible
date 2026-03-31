@@ -5,7 +5,6 @@ import {
   getHabitById, getZoneById, getWeekNumber, getWeekStart,
 } from './data.js';
 import * as db from './db.js';
-
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
 function todayISO() {
@@ -85,9 +84,15 @@ const state = {
   logSelections: {},
   logSelectionsDate: null,
   adminTaps: 0,
-  homeFilter: null,   // null | category key | 'extra' | 'bonus'
-  zoneActive: {},     // { [zone_id]: boolean } — loaded from DB
+  homeFilter: null,
+  zoneActive: {},
+  customHabits: [],   // loaded from DB, merged with static EXTRA_CREDIT / BONUS_TASKS
 };
+
+// Helpers that merge static + custom habits
+function allExtraCredit() { return [...allExtraCredit(), ...state.customHabits.filter(h => h.type === 'extra')]; }
+function allBonusTasks()   { return [...allBonusTasks(),  ...state.customHabits.filter(h => h.type === 'repeat')]; }
+function findHabit(id)     { return getHabitById(id) || state.customHabits.find(h => h.id === id); }
 
 // ── THEME / COLOR PREFS ───────────────────────────────────────────────────────
 
@@ -143,6 +148,9 @@ async function init() {
       // Fall back: treat all zones as active if fetch fails
       ZONES.forEach(z => { state.zoneActive[z.id] = true; });
     }
+
+    // Load admin-created custom habits
+    try { state.customHabits = await db.getCustomHabits(); } catch (_) {}
 
     const fromLocal   = localStorage.getItem('mp_user');
     const fromSession = sessionStorage.getItem('mp_user');
@@ -462,8 +470,8 @@ function renderRings(completedIds, date) {
   }).join('');
 
   // Extra Credit tile
-  const ecDone   = EXTRA_CREDIT.filter(h => state.myEntries.some(e => e.habit_id === h.id)).length;
-  const ecTotal  = EXTRA_CREDIT.length;
+  const ecDone   = allExtraCredit().filter(h => state.myEntries.some(e => e.habit_id === h.id)).length;
+  const ecTotal  = allExtraCredit().length;
   const ecPct    = ecTotal ? ecDone / ecTotal : 0;
   const ecDash   = (ecPct * circ).toFixed(2);
   const ecActive = state.homeFilter === 'extra';
@@ -484,8 +492,8 @@ function renderRings(completedIds, date) {
     </div>`;
 
   // Bonus Tasks tile
-  const btDoneToday = BONUS_TASKS.filter(h => state.myEntries.some(e => e.habit_id === h.id && e.date === today)).length;
-  const btTotal     = BONUS_TASKS.length;
+  const btDoneToday = allBonusTasks().filter(h => state.myEntries.some(e => e.habit_id === h.id && e.date === today)).length;
+  const btTotal     = allBonusTasks().length;
   const btPct       = btTotal ? btDoneToday / btTotal : 0;
   const btDash      = (btPct * circ).toFixed(2);
   const btActive    = state.homeFilter === 'bonus';
@@ -580,14 +588,14 @@ function renderHomeHabits(completedIds, today) {
     // When a single category is selected, also show related extra/bonus items
     let extraRows = '';
     if (f) {
-      const ecItems = EXTRA_CREDIT.filter(h => h.category === key);
-      const btItems = BONUS_TASKS.filter(h => h.category === key);
+      const ecItems = allExtraCredit().filter(h => h.category === key);
+      const btItems = allBonusTasks().filter(h => h.category === key);
 
       if (ecItems.length) {
         extraRows += ecItems.map(h => {
           const done = state.myEntries.some(e => e.habit_id === h.id);
           return `
-            <div class="habit-row ${done ? 'done' : ''}" style="--cc:#f59e0b;opacity:${done ? '.55' : '1'}">
+            <div class="habit-row tappable special-habit ${done ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:#f59e0b">
               <div class="habit-check ${done ? 'checked' : ''}" style="${done ? 'background:#f59e0b' : 'border-color:#f59e0b'}">
                 ${done ? '✓' : ''}
               </div>
@@ -605,7 +613,7 @@ function renderHomeHabits(completedIds, today) {
           const timesLogged = state.myEntries.filter(e => e.habit_id === h.id).length;
           const doneToday   = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
           return `
-            <div class="habit-row ${doneToday ? 'done' : ''}" style="--cc:#10b981;opacity:${doneToday ? '.55' : '1'}">
+            <div class="habit-row tappable special-habit ${doneToday ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:#10b981">
               <div class="habit-check ${doneToday ? 'checked' : ''}" style="${doneToday ? 'background:#10b981' : 'border-color:#10b981'}">
                 ${doneToday ? '✓' : ''}
               </div>
@@ -633,8 +641,11 @@ function renderHomeHabits(completedIds, today) {
 
   container.innerHTML = sections;
 
-  container.querySelectorAll('.habit-row.tappable').forEach(row => {
+  container.querySelectorAll('.habit-row.tappable:not(.special-habit)').forEach(row => {
     row.addEventListener('click', () => toggleHabit(row.dataset.habitId, row.dataset.date));
+  });
+  container.querySelectorAll('.special-habit').forEach(row => {
+    row.addEventListener('click', () => toggleSpecialHabit(row.dataset.habitId));
   });
   if (window.lucide) lucide.createIcons();
 }
@@ -654,11 +665,11 @@ function renderExtraCreditHome() {
     return;
   }
 
-  const ecEarned    = EXTRA_CREDIT.filter(h => state.myEntries.some(e => e.habit_id === h.id));
-  const ecTotalPts  = EXTRA_CREDIT.reduce((s, h) => s + h.points, 0);
+  const ecEarned    = allExtraCredit().filter(h => state.myEntries.some(e => e.habit_id === h.id));
+  const ecTotalPts  = allExtraCredit().reduce((s, h) => s + h.points, 0);
   const ecEarnedPts = ecEarned.reduce((s, h) => s + h.points, 0);
 
-  const btTodayPts = BONUS_TASKS.reduce((s, h) => {
+  const btTodayPts = allBonusTasks().reduce((s, h) => {
     return s + state.myEntries.filter(e => e.habit_id === h.id).length * h.points;
   }, 0);
 
@@ -668,7 +679,7 @@ function renderExtraCreditHome() {
       <span class="section-tap-hint">${ecEarnedPts} / ${ecTotalPts} pts</span>
     </div>
     <div class="ec-home-list">
-      ${EXTRA_CREDIT.map(h => {
+      ${allExtraCredit().map(h => {
         const done = state.myEntries.some(e => e.habit_id === h.id);
         return `
           <div class="ec-home-row ${done ? 'done' : ''}">
@@ -686,7 +697,7 @@ function renderExtraCreditHome() {
       <span class="section-tap-hint">${btTodayPts} pts earned total</span>
     </div>
     <div class="ec-home-list">
-      ${BONUS_TASKS.map(h => {
+      ${allBonusTasks().map(h => {
         const timesLogged = state.myEntries.filter(e => e.habit_id === h.id).length;
         const doneToday   = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
         return `
@@ -705,7 +716,36 @@ function renderExtraCreditHome() {
 
 async function toggleHabit(habitId, date) {
   const habit = getHabitById(habitId);
-  const wasCompleted = state.myEntries.some(e => e.habit_id === habitId && e.date === date);
+
+// Toggle extra-credit (one-time) or bonus-task (repeatable) directly from home view
+async function toggleSpecialHabit(habitId) {
+  const habit = findHabit(habitId);
+  if (!habit) return;
+  const today = todayISO();
+  try {
+    if (habit.type === 'extra') {
+      const existing = state.myEntries.find(e => e.habit_id === habitId);
+      if (existing) {
+        await db.deleteEntriesByIds([existing.id]);
+        state.myEntries = state.myEntries.filter(e => e.id !== existing.id);
+      } else {
+        const entry = await db.addEntry({ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date: today });
+        state.myEntries.push(entry);
+      }
+    } else if (habit.type === 'repeat') {
+      const existing = state.myEntries.find(e => e.habit_id === habitId && e.date === today);
+      if (existing) {
+        await db.deleteEntriesByIds([existing.id]);
+        state.myEntries = state.myEntries.filter(e => e.id !== existing.id);
+      } else {
+        const entry = await db.addEntry({ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date: today });
+        state.myEntries.push(entry);
+      }
+    }
+    updateStats();
+    renderHome();
+  } catch (_) { showToast('Save failed', 'error'); }
+}  const wasCompleted = state.myEntries.some(e => e.habit_id === habitId && e.date === date);
 
   // Optimistic update
   if (wasCompleted) {
@@ -772,11 +812,11 @@ function renderLogHabits() {
       }
     });
     // Extra credit: one-time, not date/week bound
-    EXTRA_CREDIT.forEach(h => {
+    allExtraCredit().forEach(h => {
       state.logSelections[h.id] = state.myEntries.some(e => e.habit_id === h.id);
     });
     // Bonus tasks: repeatable, tracked per date
-    BONUS_TASKS.forEach(h => {
+    allBonusTasks().forEach(h => {
       state.logSelections[h.id] = state.myEntries.some(e => e.habit_id === h.id && e.date === date);
     });
   }
@@ -788,26 +828,30 @@ function renderLogHabits() {
     const daily   = DAILY_HABITS.filter(h => h.category === key);
     const weekly  = WEEKLY_CHALLENGES.find(h => h.category === key);
     const bonusH  = bonus?.category === key ? bonus : null;
+    const ecItems = allExtraCredit().filter(h => h.category === key);
+    const btItems = allBonusTasks().filter(h => h.category === key);
 
-    const renderRow = (h, tag = null) => {
+    const renderRow = (h, tag = null, color = cat.color) => {
       const sel = !!state.logSelections[h.id];
       return `
-        <div class="log-row ${sel ? 'selected' : ''}" data-habit-id="${h.id}" style="--cc:${cat.color}">
-          <div class="log-check ${sel ? 'checked' : ''}" style="${sel ? `background:${cat.color}` : `border-color:${cat.color}`}">
+        <div class="log-row ${sel ? 'selected' : ''}" data-habit-id="${h.id}" style="--cc:${color}">
+          <div class="log-check ${sel ? 'checked' : ''}" style="${sel ? `background:${color}` : `border-color:${color}`}">
             ${sel ? '✓' : ''}
           </div>
           <div class="log-info">
             <span class="log-label">${h.label}</span>
             ${tag ? `<span class="log-tag ${h.type}">${tag}</span>` : ''}
           </div>
-          <span class="log-pts" style="color:${cat.color}">+${h.points}</span>
+          <span class="log-pts" style="color:${color}">+${h.points}</span>
         </div>`;
     };
 
     const rows = [
       ...daily.map(h => renderRow(h)),
-      weekly  && !(weekly.sundayOnly && !isSunday)  ? renderRow(weekly,  'Weekly · 5pts') : '',
-      bonusH  ? renderRow(bonusH, `Week ${bonusH.week} Bonus · 10pts`) : '',
+      weekly && !(weekly.sundayOnly && !isSunday) ? renderRow(weekly, 'Weekly · 5pts') : '',
+      bonusH ? renderRow(bonusH, `Week ${bonusH.week} Bonus · 10pts`) : '',
+      ...ecItems.map(h => renderRow(h, `One-time · ${h.points}pts`, '#f59e0b')),
+      ...btItems.map(h => renderRow(h, `Repeatable · ${h.points}pts`, '#10b981')),
     ].join('');
 
     return `
@@ -819,51 +863,7 @@ function renderLogHabits() {
       </div>`;
   }).join('');
 
-  // Extra credit section (one-time)
-  const ecRows = EXTRA_CREDIT.map(h => {
-    const sel = !!state.logSelections[h.id];
-    return `
-      <div class="log-row ${sel ? 'selected' : ''}" data-habit-id="${h.id}" style="--cc:#f59e0b">
-        <div class="log-check ${sel ? 'checked' : ''}" style="${sel ? 'background:#f59e0b' : 'border-color:#f59e0b'}">
-          ${sel ? '✓' : ''}
-        </div>
-        <div class="log-info">
-          <span class="log-label">${h.label}</span>
-          <span class="log-tag extra">One-time · ${h.points}pts</span>
-        </div>
-        <span class="log-pts" style="color:#f59e0b">+${h.points}</span>
-      </div>`;
-  }).join('');
-
-  // Bonus tasks section (repeatable each day)
-  const btRows = BONUS_TASKS.map(h => {
-    const sel = !!state.logSelections[h.id];
-    return `
-      <div class="log-row ${sel ? 'selected' : ''}" data-habit-id="${h.id}" style="--cc:#10b981">
-        <div class="log-check ${sel ? 'checked' : ''}" style="${sel ? 'background:#10b981' : 'border-color:#10b981'}">
-          ${sel ? '✓' : ''}
-        </div>
-        <div class="log-info">
-          <span class="log-label">${h.label}</span>
-          <span class="log-tag repeat">Repeatable · ${h.points}pts</span>
-        </div>
-        <span class="log-pts" style="color:#10b981">+${h.points}</span>
-      </div>`;
-  }).join('');
-
-  container.innerHTML = mainHtml + `
-    <div class="log-cat-group">
-      <div class="log-cat-header" style="color:#f59e0b;border-color:#f59e0b22">
-        <i data-lucide="star" class="icon-sm"></i>Extra Credit (One-Time)
-      </div>
-      ${ecRows}
-    </div>
-    <div class="log-cat-group">
-      <div class="log-cat-header" style="color:#10b981;border-color:#10b98122">
-        <i data-lucide="repeat" class="icon-sm"></i>Bonus Tasks (Repeatable Daily)
-      </div>
-      ${btRows}
-    </div>`;
+  container.innerHTML = mainHtml;
 
   container.querySelectorAll('.log-row').forEach(row => {
     row.addEventListener('click', () => {
@@ -894,8 +894,8 @@ async function submitLog() {
     ...DAILY_HABITS,
     ...WEEKLY_CHALLENGES.filter(h => !h.sundayOnly || isSunday),
     ...BONUS_CHALLENGES.filter(b => b.week === week),
-    ...EXTRA_CREDIT,
-    ...BONUS_TASKS,
+    ...allExtraCredit(),
+    ...allBonusTasks(),
   ];
 
   habitsForDate.forEach(h => {
@@ -1191,6 +1191,38 @@ async function renderAdmin() {
         }).join('')}
       </div>
 
+      <div class="admin-section">
+        <h3>Custom Challenges</h3>
+        <p class="admin-section-hint">Add extra credit (one-time) or bonus tasks (repeatable daily) that appear in each user's Log tab.</p>
+        <form id="custom-habit-form" class="custom-habit-form">
+          <input type="text" id="ch-label" placeholder="Challenge label…" required class="ch-input">
+          <div class="ch-row">
+            <select id="ch-category" class="ch-select">
+              <option value="spiritual">Spiritual</option>
+              <option value="physical">Physical</option>
+              <option value="social">Social</option>
+              <option value="emotional">Emotional</option>
+            </select>
+            <select id="ch-type" class="ch-select">
+              <option value="extra">Extra Credit (one-time)</option>
+              <option value="repeat">Bonus Task (repeatable)</option>
+            </select>
+            <input type="number" id="ch-points" value="5" min="1" max="50" class="ch-pts-input">
+            <button type="submit" class="btn-primary ch-add-btn">Add</button>
+          </div>
+        </form>
+        <div id="custom-habits-list">
+          ${state.customHabits.length === 0 ? '<p class="admin-section-hint" style="text-align:center;padding:.5rem">No custom challenges yet.</p>' : ''}
+          ${state.customHabits.map(h => `
+            <div class="admin-entry-row">
+              <span class="ae-user">${CATEGORIES[h.category]?.label || h.category}</span>
+              <span class="ae-habit">${h.label}</span>
+              <span class="ae-pts">${h.type === 'extra' ? 'one-time' : 'repeat'} · ${h.points}pts</span>
+              <button class="btn-del-custom" data-cid="${h.id}">✕</button>
+            </div>`).join('')}
+        </div>
+      </div>
+
       <div class="admin-export">
         <button class="btn-secondary" id="btn-export">Export JSON</button>
       </div>`;
@@ -1247,8 +1279,34 @@ async function renderAdmin() {
       });
     });
 
-    document.getElementById('btn-export')?.addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify({ users, entries }, null, 2)], { type: 'application/json' });
+    document.getElementById('custom-habit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const label = document.getElementById('ch-label').value.trim();
+      const category = document.getElementById('ch-category').value;
+      const type = document.getElementById('ch-type').value;
+      const points = parseInt(document.getElementById('ch-points').value) || 5;
+      if (!label) return;
+      const habit = { id: `c${Date.now()}`, label, category, type, points, active: true };
+      try {
+        await db.addCustomHabit(habit);
+        state.customHabits = await db.getCustomHabits();
+        showToast('Challenge added!', 'success');
+        renderAdmin();
+      } catch (_) { showToast('Failed to add', 'error'); }
+    });
+
+    container.querySelectorAll('.btn-del-custom').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          await db.deleteCustomHabit(btn.dataset.cid);
+          state.customHabits = await db.getCustomHabits();
+          showToast('Removed', 'success');
+          renderAdmin();
+        } catch (_) { showToast('Failed to remove', 'error'); }
+      });
+    });
+
+    document.getElementById('btn-export')?.addEventListener('click', () => {      const blob = new Blob([JSON.stringify({ users, entries }, null, 2)], { type: 'application/json' });
       const a = Object.assign(document.createElement('a'), {
         href: URL.createObjectURL(blob),
         download: `mission-possible-${todayISO()}.json`,

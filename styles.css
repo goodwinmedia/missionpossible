@@ -1022,6 +1022,27 @@ button { cursor: pointer; font-family: var(--fbody); }
 .btn-del-entry:hover { color: #ef4444; }
 .admin-export { padding-top: .5rem; }
 
+/* Custom habit form */
+.custom-habit-form { margin-bottom: .75rem; }
+.ch-input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--rs); padding: .6rem .8rem;
+  font-size: .85rem; margin-bottom: .45rem; box-sizing: border-box;
+}
+.ch-input:focus { outline: none; border-color: var(--accent); }
+.ch-row { display: flex; gap: .4rem; align-items: center; }
+.ch-select {
+  flex: 1; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--rs); padding: .55rem .5rem;
+  font-size: .78rem; min-width: 0;
+}
+.ch-pts-input {
+  width: 52px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--rs); padding: .55rem .5rem;
+  font-size: .82rem; text-align: center; flex-shrink: 0;
+}
+.ch-add-btn { flex-shrink: 0; padding: .55rem 1rem; font-size: .82rem; }
+
 /* ── BOTTOM NAV ──────────────────────────────────────────── */
 #bottom-nav {
   display: flex;

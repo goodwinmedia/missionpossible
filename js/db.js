@@ -11,6 +11,25 @@ export function getClient() {
   return _client;
 }
 
+// ── CUSTOM HABITS ─────────────────────────────────────────────────────────────
+
+export async function getCustomHabits() {
+  const { data, error } = await getClient().from('custom_habits').select('*').eq('active', true).order('created_at');
+  if (error) throw error;
+  return data;
+}
+
+export async function addCustomHabit(habit) {
+  const { data, error } = await getClient().from('custom_habits').insert(habit).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteCustomHabit(id) {
+  const { error } = await getClient().from('custom_habits').delete().eq('id', id);
+  if (error) throw error;
+}
+
 // ── ZONES ─────────────────────────────────────────────────────────────────────
 
 export async function getZonesWithStatus() {

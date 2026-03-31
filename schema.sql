@@ -77,7 +77,24 @@ do $$ begin
   if not exists (select 1 from pg_policies where policyname = 'anon_delete_entries' and tablename = 'entries') then create policy "anon_delete_entries" on public.entries for delete using (true); end if;
 end $$;
 
--- ── REALTIME ──────────────────────────────────────────────
+-- CUSTOM HABITS (admin-created extra credit & bonus tasks)
+create table if not exists public.custom_habits (
+  id         text primary key,
+  label      text not null,
+  category   text not null,   -- spiritual | physical | social | emotional
+  type       text not null,   -- 'extra' (one-time) | 'repeat' (daily)
+  points     integer not null default 5,
+  active     boolean not null default true,
+  created_at timestamptz default now()
+);
+
+alter table public.custom_habits enable row level security;
+
+do $$ begin
+  if not exists (select 1 from pg_policies where policyname = 'anon_read_custom_habits'   and tablename = 'custom_habits') then create policy "anon_read_custom_habits"   on public.custom_habits for select using (true); end if;
+  if not exists (select 1 from pg_policies where policyname = 'anon_insert_custom_habits' and tablename = 'custom_habits') then create policy "anon_insert_custom_habits" on public.custom_habits for insert with check (true); end if;
+  if not exists (select 1 from pg_policies where policyname = 'anon_delete_custom_habits' and tablename = 'custom_habits') then create policy "anon_delete_custom_habits" on public.custom_habits for delete using (true); end if;
+end $$;
 do $$
 begin
   if not exists (
