@@ -593,15 +593,19 @@ function renderHomeHabits(completedIds, today) {
 
       if (ecItems.length) {
         extraRows += ecItems.map(h => {
-          const done = state.myEntries.some(e => e.habit_id === h.id);
+          const done    = state.myEntries.some(e => e.habit_id === h.id);
+          const hcat    = CATEGORIES[h.category];
           return `
             <div class="habit-row tappable special-habit ${done ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:#f59e0b">
               <div class="habit-check ${done ? 'checked' : ''}" style="${done ? 'background:#f59e0b' : 'border-color:#f59e0b'}">
                 ${done ? '✓' : ''}
               </div>
-              <div style="flex:1">
+              <div style="flex:1;min-width:0">
                 <span class="habit-label">${h.label}</span>
-                <span class="log-tag extra" style="display:block">One-time · ${h.points}pts</span>
+                <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">
+                  <span class="cat-tag" style="background:${hcat.color}22;color:${hcat.color};border:1px solid ${hcat.color}44">${hcat.label}</span>
+                  <span class="log-tag extra">One-time · ${h.points}pts</span>
+                </div>
               </div>
               <span class="habit-pts" style="color:#f59e0b">+${h.points}</span>
             </div>`;
@@ -612,14 +616,18 @@ function renderHomeHabits(completedIds, today) {
         extraRows += btItems.map(h => {
           const timesLogged = state.myEntries.filter(e => e.habit_id === h.id).length;
           const doneToday   = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
+          const hcat        = CATEGORIES[h.category];
           return `
             <div class="habit-row tappable special-habit ${doneToday ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:#10b981">
               <div class="habit-check ${doneToday ? 'checked' : ''}" style="${doneToday ? 'background:#10b981' : 'border-color:#10b981'}">
                 ${doneToday ? '✓' : ''}
               </div>
-              <div style="flex:1">
+              <div style="flex:1;min-width:0">
                 <span class="habit-label">${h.label}</span>
-                <span class="log-tag repeat" style="display:block">Repeatable · ${h.points}pts${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
+                <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">
+                  <span class="cat-tag" style="background:${hcat.color}22;color:${hcat.color};border:1px solid ${hcat.color}44">${hcat.label}</span>
+                  <span class="log-tag repeat">Repeatable · ${h.points}pts${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
+                </div>
               </div>
               <span class="habit-pts" style="color:#10b981">+${h.points}</span>
             </div>`;
@@ -627,7 +635,7 @@ function renderHomeHabits(completedIds, today) {
       }
 
       if (extraRows) {
-        extraRows = `<div class="cat-sub-header" style="color:${cat.color}88">Extra & Bonus</div>` + extraRows;
+        extraRows = `<div class="cat-sub-header" style="color:${cat.color}"><i data-lucide="zap" class="icon-sm"></i>Extra & Bonus</div>` + extraRows;
       }
     }
 
@@ -681,14 +689,18 @@ function renderExtraCreditHome() {
     <div class="ec-home-list">
       ${allExtraCredit().map(h => {
         const done = state.myEntries.some(e => e.habit_id === h.id);
+        const cat  = CATEGORIES[h.category];
         return `
-          <div class="ec-home-row tappable ${done ? 'done' : ''}" data-habit-id="${h.id}">
-            <div class="ec-check ${done ? 'checked' : ''}">${done ? '✓' : ''}</div>
-            <div style="flex:1">
-              <span class="ec-home-label">${h.label}</span>
-              <span class="log-tag extra" style="display:block">One-time · ${h.points}pts</span>
+          <div class="habit-row tappable special-habit ${done ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:${cat.color}">
+            <div class="habit-check ${done ? 'checked' : ''}" style="${done ? `background:${cat.color}` : `border-color:${cat.color}`}">${done ? '✓' : ''}</div>
+            <div style="flex:1;min-width:0">
+              <span class="habit-label">${h.label}</span>
+              <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">
+                <span class="cat-tag" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44">${cat.label}</span>
+                <span class="log-tag extra">One-time · ${h.points}pts</span>
+              </div>
             </div>
-            <span class="ec-home-pts" style="color:#f59e0b">${done ? '✓' : `+${h.points}`}</span>
+            <span class="habit-pts" style="color:${cat.color}">${done ? '✓' : `+${h.points}`}</span>
           </div>`;
       }).join('')}
     </div>` : '';
@@ -702,20 +714,24 @@ function renderExtraCreditHome() {
       ${allBonusTasks().map(h => {
         const timesLogged = state.myEntries.filter(e => e.habit_id === h.id).length;
         const doneToday   = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
+        const cat         = CATEGORIES[h.category];
         return `
-          <div class="ec-home-row tappable ${doneToday ? 'done' : ''}" data-habit-id="${h.id}">
-            <div class="ec-check ${doneToday ? 'checked' : ''}" style="${doneToday ? 'background:#10b981' : 'border-color:#10b981'}">${doneToday ? '✓' : ''}</div>
-            <div style="flex:1">
-              <span class="ec-home-label">${h.label}</span>
-              <span class="log-tag repeat" style="display:block">Repeatable · ${h.points}pts${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
+          <div class="habit-row tappable special-habit ${doneToday ? 'done' : ''}" data-habit-id="${h.id}" style="--cc:${cat.color}">
+            <div class="habit-check ${doneToday ? 'checked' : ''}" style="${doneToday ? `background:${cat.color}` : `border-color:${cat.color}`}">${doneToday ? '✓' : ''}</div>
+            <div style="flex:1;min-width:0">
+              <span class="habit-label">${h.label}</span>
+              <div style="display:flex;gap:.4rem;align-items:center;margin-top:2px;flex-wrap:wrap">
+                <span class="cat-tag" style="background:${cat.color}22;color:${cat.color};border:1px solid ${cat.color}44">${cat.label}</span>
+                <span class="log-tag repeat">Repeatable · ${h.points}pts${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
+              </div>
             </div>
-            <span class="ec-home-pts" style="color:#10b981">${timesLogged > 0 ? `×${timesLogged}` : `+${h.points}`}</span>
+            <span class="habit-pts" style="color:${cat.color}">${timesLogged > 0 ? `×${timesLogged}` : `+${h.points}`}</span>
           </div>`;
       }).join('')}
     </div>` : '';
 
   container.innerHTML = ecSection + btSection;
-  container.querySelectorAll('.ec-home-row.tappable').forEach(row => {
+  container.querySelectorAll('.special-habit').forEach(row => {
     row.addEventListener('click', () => toggleSpecialHabit(row.dataset.habitId));
   });
   if (window.lucide) lucide.createIcons();
@@ -726,29 +742,49 @@ async function toggleSpecialHabit(habitId) {
   const habit = findHabit(habitId);
   if (!habit) return;
   const today = todayISO();
+
+  // Determine current state before any change
+  const existingEntry = habit.type === 'extra'
+    ? state.myEntries.find(e => e.habit_id === habitId)
+    : state.myEntries.find(e => e.habit_id === habitId && e.date === today);
+
+  // Optimistic UI update for instant feedback
+  if (existingEntry) {
+    state.myEntries = state.myEntries.filter(e => e !== existingEntry);
+  } else {
+    state.myEntries.push({ habit_id: habitId, date: today, category: habit.category, points: habit.points, type: habit.type, user_id: state.user.id });
+  }
+  updateStats();
+  renderHome();
+
   try {
-    if (habit.type === 'extra') {
-      const existing = state.myEntries.find(e => e.habit_id === habitId);
-      if (existing) {
-        await db.deleteEntriesByIds([existing.id]);
-        state.myEntries = state.myEntries.filter(e => e.id !== existing.id);
-      } else {
-        const entry = await db.addEntry({ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date: today });
-        state.myEntries.push(entry);
-      }
-    } else if (habit.type === 'repeat') {
-      const existing = state.myEntries.find(e => e.habit_id === habitId && e.date === today);
-      if (existing) {
-        await db.deleteEntriesByIds([existing.id]);
-        state.myEntries = state.myEntries.filter(e => e.id !== existing.id);
-      } else {
-        const entry = await db.addEntry({ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date: today });
-        state.myEntries.push(entry);
-      }
+    if (existingEntry) {
+      // Delete by user_id+habit_id+date — no need for the entry's DB id
+      await db.deleteEntry(state.user.id, habitId, existingEntry.date);
+    } else {
+      // Upsert (same path as submitLog) — handles uniqueness constraints gracefully
+      await db.batchUpsertEntries([{ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date: today }]);
     }
+    // Reload from DB to guarantee accuracy
+    [state.myEntries, state.allEntries] = await Promise.all([
+      db.getEntriesForUser(state.user.id),
+      db.getAllEntries(),
+    ]);
     updateStats();
     renderHome();
-  } catch (_) { showToast('Save failed', 'error'); }
+  } catch (err) {
+    console.error('toggleSpecialHabit error:', err);
+    // Revert optimistic update
+    try {
+      [state.myEntries, state.allEntries] = await Promise.all([
+        db.getEntriesForUser(state.user.id),
+        db.getAllEntries(),
+      ]);
+    } catch (_) {}
+    updateStats();
+    renderHome();
+    showToast('Save failed', 'error');
+  }
 }
 
 async function toggleHabit(habitId, date) {

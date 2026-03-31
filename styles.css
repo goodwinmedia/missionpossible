@@ -575,9 +575,10 @@ button { cursor: pointer; font-family: var(--fbody); }
   margin-bottom: .4rem; padding-left: .2rem;
 }
 .cat-sub-header {
-  font-family: var(--fhead); font-size: .65rem; font-weight: 700;
+  display: flex; align-items: center; gap: .4rem;
+  font-family: var(--fhead); font-size: .7rem; font-weight: 700;
   letter-spacing: .07em; text-transform: uppercase;
-  padding: .55rem .2rem .25rem; margin-top: .3rem;
+  padding: .65rem .2rem .3rem; margin-top: .3rem;
   border-top: 1px solid var(--border);
 }
 
@@ -674,6 +675,13 @@ button { cursor: pointer; font-family: var(--fbody); }
 .log-tag.bonus  { color: #ec4899; }
 .log-tag.extra  { color: #f59e0b; }
 .log-tag.repeat { color: #10b981; }
+.cat-tag {
+  display: inline-block;
+  font-size: .58rem; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: 1px 5px; border-radius: 4px;
+  flex-shrink: 0;
+}
 .log-pts { font-family: var(--fhead); font-size: .78rem; font-weight: 700; flex-shrink: 0; }
 
 .log-submit-wrap {
