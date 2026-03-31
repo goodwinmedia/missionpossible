@@ -579,7 +579,6 @@ button { cursor: pointer; font-family: var(--fbody); }
   padding: .55rem .2rem .25rem; margin-top: .3rem;
   border-top: 1px solid var(--border);
 }
-}
 
 /* Habit rows */
 .habit-row {
