@@ -714,9 +714,6 @@ function renderExtraCreditHome() {
   if (window.lucide) lucide.createIcons();
 }
 
-async function toggleHabit(habitId, date) {
-  const habit = getHabitById(habitId);
-
 // Toggle extra-credit (one-time) or bonus-task (repeatable) directly from home view
 async function toggleSpecialHabit(habitId) {
   const habit = findHabit(habitId);
@@ -745,7 +742,11 @@ async function toggleSpecialHabit(habitId) {
     updateStats();
     renderHome();
   } catch (_) { showToast('Save failed', 'error'); }
-}  const wasCompleted = state.myEntries.some(e => e.habit_id === habitId && e.date === date);
+}
+
+async function toggleHabit(habitId, date) {
+  const habit = getHabitById(habitId);
+  const wasCompleted = state.myEntries.some(e => e.habit_id === habitId && e.date === date);
 
   // Optimistic update
   if (wasCompleted) {
