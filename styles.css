@@ -84,7 +84,6 @@ button { cursor: pointer; font-family: var(--fbody); }
   height: auto;
   display: block;
   margin: 0;
-  mix-blend-mode: screen;
 }
 .loading-dots { display: flex; justify-content: center; gap: .4rem; margin-top: 2.5rem; }
 .loading-dots span {
@@ -174,7 +173,6 @@ button { cursor: pointer; font-family: var(--fbody); }
   height: auto;
   display: block;
   margin: 0 auto .25rem;
-  mix-blend-mode: screen;
 }
 .ob-sub {
   color: var(--dim);

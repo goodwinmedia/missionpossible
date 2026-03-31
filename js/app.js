@@ -434,7 +434,7 @@ function renderHome() {
   const week = getWeekNumber(today, PROGRAM_START);
   const firstName = state.user.name.split(' ')[0];
 
-  document.getElementById('greeting-text').textContent = `${greeting()}, ${firstName}! 🔥`;
+  document.getElementById('greeting-text').textContent = `${greeting()}, ${firstName}!`;
   document.getElementById('today-date-label').textContent =
     new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
