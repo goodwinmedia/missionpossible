@@ -104,6 +104,8 @@ export const EXTRA_CREDIT = [
   { id: 'e16', category: 'spiritual', label: 'Fast for a full day with a purpose',                          points: 10, type: 'extra' },
   { id: 'e17', category: 'social',    label: 'Teach or lead a Family Home Evening lesson',                  points: 10, type: 'extra' },
   { id: 'e18', category: 'social',    label: 'Volunteer 2+ hours of community service',                     points: 15, type: 'extra' },
+  { id: 'e19', category: 'physical',  label: 'Fix a flat tire on a bike',                                   points: 10, type: 'extra' },
+  { id: 'e20', category: 'physical',  label: 'Learn how to treat a cold & flu',                             points: 5,  type: 'extra' },
 ];
 
 // ── REPEATABLE BONUS TASKS ────────────────────────────────
@@ -115,6 +117,9 @@ export const BONUS_TASKS = [
   { id: 'r5', category: 'social',    label: 'Random act of service for someone outside family', points: 2, type: 'repeat' },
   { id: 'r6', category: 'social',    label: 'Call or visit a grandparent or elderly person',    points: 3, type: 'repeat' },
   { id: 'r7', category: 'physical',  label: 'Do yard work or deep-clean a room',                points: 2, type: 'repeat' },
+  { id: 'r8', category: 'social',    label: 'Make a shopping list',                              points: 2, type: 'repeat' },
+  { id: 'r9', category: 'social',    label: 'Make a weekly meal plan and go shopping with your family', points: 3, type: 'repeat' },
+  { id: 'r10', category: 'emotional', label: 'Make a weekly budget and savings plan',             points: 3, type: 'repeat' },
 ];
 
 export function getHabitById(id) {
