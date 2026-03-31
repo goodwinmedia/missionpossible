@@ -1,6 +1,6 @@
 import { PROGRAM_START, ADMIN_CODE } from './config.js';
 import {
-  ZONES, MISSIONS, CATEGORIES, DAILY_HABITS, WEEKLY_CHALLENGES, BONUS_CHALLENGES, ALL_HABITS,
+  ZONES, MISSIONS, CATEGORIES, DAILY_HABITS, WEEKLY_CHALLENGES, BONUS_CHALLENGES, EXTRA_CREDIT, ALL_HABITS,
   getHabitById, getZoneById, getWeekNumber, getWeekStart,
 } from './data.js';
 import * as db from './db.js';
@@ -375,6 +375,7 @@ function renderHome() {
   renderRings(completedIds, today);
   renderChallengeStrip(completedIds, week);
   renderHomeHabits(completedIds, today);
+  renderExtraCreditHome();
 }
 
 function renderRings(completedIds, date) {
@@ -466,6 +467,33 @@ function renderHomeHabits(completedIds, today) {
   if (window.lucide) lucide.createIcons();
 }
 
+function renderExtraCreditHome() {
+  const container = document.getElementById('extra-credit-home');
+  if (!container) return;
+
+  const earned  = EXTRA_CREDIT.filter(h => state.myEntries.some(e => e.habit_id === h.id));
+  const totalPts = EXTRA_CREDIT.reduce((s, h) => s + h.points, 0);
+  const earnedPts = earned.reduce((s, h) => s + h.points, 0);
+
+  container.innerHTML = `
+    <div class="section-head" style="margin-top:1.25rem">
+      <span class="section-title">⭐ Extra Credit</span>
+      <span class="section-tap-hint">${earnedPts} / ${totalPts} pts</span>
+    </div>
+    <div class="ec-home-list">
+      ${EXTRA_CREDIT.map(h => {
+        const done = state.myEntries.some(e => e.habit_id === h.id);
+        return `
+          <div class="ec-home-row ${done ? 'done' : ''}">
+            <div class="ec-check ${done ? 'checked' : ''}">${done ? '✓' : ''}</div>
+            <span class="ec-home-label">${h.label}</span>
+            <span class="ec-home-pts" style="color:#f59e0b">${done ? '✓' : `+${h.points}`}</span>
+          </div>`;
+      }).join('')}
+      <p class="ec-hint">Log extra credit in the <strong>Log</strong> tab</p>
+    </div>`;
+}
+
 async function toggleHabit(habitId, date) {
   const habit = getHabitById(habitId);
   const wasCompleted = state.myEntries.some(e => e.habit_id === habitId && e.date === date);
@@ -532,12 +560,16 @@ function renderLogHabits() {
         state.logSelections[h.id] = state.myEntries.some(e => e.habit_id === h.id && getWeekStart(e.date) === weekStart);
       }
     });
+    // Extra credit: one-time, not date/week bound
+    EXTRA_CREDIT.forEach(h => {
+      state.logSelections[h.id] = state.myEntries.some(e => e.habit_id === h.id);
+    });
   }
 
   const container = document.getElementById('log-habits-container');
   const bonus = BONUS_CHALLENGES.find(b => b.week === week);
 
-  container.innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => {
+  const mainHtml = Object.entries(CATEGORIES).map(([key, cat]) => {
     const daily   = DAILY_HABITS.filter(h => h.category === key);
     const weekly  = WEEKLY_CHALLENGES.find(h => h.category === key);
     const bonusH  = bonus?.category === key ? bonus : null;
@@ -572,6 +604,30 @@ function renderLogHabits() {
       </div>`;
   }).join('');
 
+  // Extra credit section
+  const ecRows = EXTRA_CREDIT.map(h => {
+    const sel = !!state.logSelections[h.id];
+    return `
+      <div class="log-row ${sel ? 'selected' : ''}" data-habit-id="${h.id}" style="--cc:#f59e0b">
+        <div class="log-check ${sel ? 'checked' : ''}" style="${sel ? 'background:#f59e0b' : 'border-color:#f59e0b'}">
+          ${sel ? '✓' : ''}
+        </div>
+        <div class="log-info">
+          <span class="log-label">${h.label}</span>
+          <span class="log-tag extra">One-time · ${h.points}pts</span>
+        </div>
+        <span class="log-pts" style="color:#f59e0b">+${h.points}</span>
+      </div>`;
+  }).join('');
+
+  container.innerHTML = mainHtml + `
+    <div class="log-cat-group">
+      <div class="log-cat-header" style="color:#f59e0b;border-color:#f59e0b22">
+        <i data-lucide="star" class="icon-sm"></i>Extra Credit
+      </div>
+      ${ecRows}
+    </div>`;
+
   container.querySelectorAll('.log-row').forEach(row => {
     row.addEventListener('click', () => {
       state.logSelections[row.dataset.habitId] = !state.logSelections[row.dataset.habitId];
@@ -600,6 +656,7 @@ async function submitLog() {
     ...DAILY_HABITS,
     ...WEEKLY_CHALLENGES,
     ...BONUS_CHALLENGES.filter(b => b.week === week),
+    ...EXTRA_CREDIT,
   ];
 
   habitsForDate.forEach(h => {
@@ -607,6 +664,8 @@ async function submitLog() {
     let existing;
     if (h.type === 'daily') {
       existing = state.myEntries.find(e => e.habit_id === h.id && e.date === date);
+    } else if (h.type === 'extra') {
+      existing = state.myEntries.find(e => e.habit_id === h.id);
     } else {
       existing = state.myEntries.find(e => e.habit_id === h.id && getWeekStart(e.date) === weekStart);
     }

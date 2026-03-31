@@ -80,6 +80,20 @@ export const BONUS_CHALLENGES = [
 
 export const ALL_HABITS = [...DAILY_HABITS, ...WEEKLY_CHALLENGES, ...BONUS_CHALLENGES];
 
+export const EXTRA_CREDIT = [
+  { id: 'e1',  category: 'spiritual', label: 'Memorize the missionary purpose',                              points: 15, type: 'extra' },
+  { id: 'e2',  category: 'spiritual', label: '"Becoming a Missionary" — Elder Bednar (Oct 2005 GC)',          points: 10, type: 'extra' },
+  { id: 'e3',  category: 'spiritual', label: 'Preach My Gospel — Chapter 1',                                  points: 5,  type: 'extra' },
+  { id: 'e4',  category: 'spiritual', label: 'Preach My Gospel — Chapter 2',                                  points: 5,  type: 'extra' },
+  { id: 'e5',  category: 'spiritual', label: 'Preach My Gospel — Chapter 3',                                  points: 5,  type: 'extra' },
+  { id: 'e6',  category: 'spiritual', label: 'Preach My Gospel — Chapter 4',                                  points: 5,  type: 'extra' },
+  { id: 'e7',  category: 'spiritual', label: 'Preach My Gospel — Chapter 5',                                  points: 5,  type: 'extra' },
+  { id: 'e8',  category: 'spiritual', label: 'Preach My Gospel — Chapter 6',                                  points: 5,  type: 'extra' },
+  { id: 'e9',  category: 'spiritual', label: '"Fourth Floor, Last Door" — Pres. Uchtdorf (Oct 2016 GC)',      points: 10, type: 'extra' },
+  { id: 'e10', category: 'spiritual', label: '"Hope of Israel" — Pres. Nelson Youth Devotional (Jun 2018)',   points: 10, type: 'extra' },
+  { id: 'e11', category: 'spiritual', label: 'Memorize D&C 4',                                                points: 15, type: 'extra' },
+];
+
 export function getHabitById(id) {
   return ALL_HABITS.find(h => h.id === id);
 }

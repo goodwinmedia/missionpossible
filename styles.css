@@ -653,6 +653,7 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .log-tag.weekly { color: #f59e0b; }
 .log-tag.bonus  { color: #ec4899; }
+.log-tag.extra  { color: #f59e0b; }
 .log-pts { font-family: var(--fhead); font-size: .78rem; font-weight: 700; flex-shrink: 0; }
 
 .log-submit-wrap {
@@ -974,6 +975,41 @@ button { cursor: pointer; font-family: var(--fbody); }
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* ── EXTRA CREDIT HOME ───────────────────────────────────── */
+.ec-home-list {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--rs);
+  overflow: hidden;
+  margin-bottom: 1.1rem;
+}
+.ec-home-row {
+  display: flex; align-items: center; gap: .65rem;
+  padding: .65rem .85rem;
+  border-bottom: 1px solid var(--border);
+  transition: background .15s;
+}
+.ec-home-row:last-of-type { border-bottom: none; }
+.ec-home-row.done { opacity: .5; }
+.ec-check {
+  width: 18px; height: 18px; flex-shrink: 0;
+  border: 2px solid #f59e0b; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .6rem; font-weight: 700; color: #fff;
+}
+.ec-check.checked { background: #f59e0b; border-color: #f59e0b; }
+.ec-home-label {
+  flex: 1; font-size: .82rem; font-weight: 500; line-height: 1.35; color: var(--text);
+}
+.ec-home-pts {
+  font-family: var(--fhead); font-size: .72rem; font-weight: 700; flex-shrink: 0;
+}
+.ec-hint {
+  color: var(--muted); font-size: .72rem; text-align: center;
+  padding: .5rem; border-top: 1px solid var(--border);
+}
+.ec-hint strong { color: var(--dim); }
 
 /* ── MODAL ───────────────────────────────────────────────── */
 .modal-overlay {
