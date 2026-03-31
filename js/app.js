@@ -431,17 +431,19 @@ function renderHome() {
 function renderRings(completedIds, date) {
   const container = document.getElementById('rings-grid');
   const today = todayISO();
+  const r = 27, circ = 2 * Math.PI * r;
 
-  // 4 category tiles
+  // 4 category tiles — ring fill = today's daily completion; label = total pts all time
   const catTiles = Object.entries(CATEGORIES).map(([key, cat]) => {
-    const habits = DAILY_HABITS.filter(h => h.category === key);
-    const done = habits.filter(h => completedIds.has(h.id)).length;
-    const total = habits.length;
-    const pct = total ? done / total : 0;
-    const r = 27;
-    const circ = 2 * Math.PI * r;
-    const dash = (pct * circ).toFixed(2);
-    const active = state.homeFilter === key;
+    const habits  = DAILY_HABITS.filter(h => h.category === key);
+    const done    = habits.filter(h => completedIds.has(h.id)).length;
+    const total   = habits.length;
+    const pct     = total ? done / total : 0;
+    const dash    = (pct * circ).toFixed(2);
+    const totalPts = state.myEntries
+      .filter(e => e.category === key)
+      .reduce((s, e) => s + e.points, 0);
+    const active  = state.homeFilter === key;
 
     return `
       <div class="ring-card ${active ? 'active' : ''}" data-filter="${key}" style="${active ? `--ring-active:${cat.color}` : ''}">
@@ -455,16 +457,15 @@ function renderRings(completedIds, date) {
           <i data-lucide="${cat.icon}" class="ring-icon" style="color:${cat.color}"></i>
         </div>
         <div class="ring-label">${cat.label}</div>
-        <div class="ring-progress" style="color:${cat.color}">${done}/${total}</div>
+        <div class="ring-progress" style="color:${cat.color}">${totalPts}pts</div>
       </div>`;
   }).join('');
 
   // Extra Credit tile
-  const ecDone  = EXTRA_CREDIT.filter(h => state.myEntries.some(e => e.habit_id === h.id)).length;
-  const ecTotal = EXTRA_CREDIT.length;
-  const ecPct   = ecTotal ? ecDone / ecTotal : 0;
-  const r = 27, circ = (2 * Math.PI * r);
-  const ecDash  = (ecPct * circ).toFixed(2);
+  const ecDone   = EXTRA_CREDIT.filter(h => state.myEntries.some(e => e.habit_id === h.id)).length;
+  const ecTotal  = EXTRA_CREDIT.length;
+  const ecPct    = ecTotal ? ecDone / ecTotal : 0;
+  const ecDash   = (ecPct * circ).toFixed(2);
   const ecActive = state.homeFilter === 'extra';
 
   const ecTile = `
@@ -561,7 +562,7 @@ function renderHomeHabits(completedIds, today) {
     ? Object.entries(CATEGORIES).filter(([key]) => key === f)
     : Object.entries(CATEGORIES);
 
-  container.innerHTML = categoriesToShow.map(([key, cat]) => {
+  const sections = categoriesToShow.map(([key, cat]) => {
     const habits = DAILY_HABITS.filter(h => h.category === key);
     const rows = habits.map(h => {
       const done = completedIds.has(h.id);
@@ -575,12 +576,61 @@ function renderHomeHabits(completedIds, today) {
         </div>`;
     }).join('');
 
+    // When a single category is selected, also show related extra/bonus items
+    let extraRows = '';
+    if (f) {
+      const ecItems = EXTRA_CREDIT.filter(h => h.category === key);
+      const btItems = BONUS_TASKS.filter(h => h.category === key);
+
+      if (ecItems.length) {
+        extraRows += ecItems.map(h => {
+          const done = state.myEntries.some(e => e.habit_id === h.id);
+          return `
+            <div class="habit-row ${done ? 'done' : ''}" style="--cc:#f59e0b;opacity:${done ? '.55' : '1'}">
+              <div class="habit-check ${done ? 'checked' : ''}" style="${done ? 'background:#f59e0b' : 'border-color:#f59e0b'}">
+                ${done ? '✓' : ''}
+              </div>
+              <div style="flex:1">
+                <span class="habit-label">${h.label}</span>
+                <span class="log-tag extra" style="display:block">One-time · ${h.points}pts</span>
+              </div>
+              <span class="habit-pts" style="color:#f59e0b">+${h.points}</span>
+            </div>`;
+        }).join('');
+      }
+
+      if (btItems.length) {
+        extraRows += btItems.map(h => {
+          const timesLogged = state.myEntries.filter(e => e.habit_id === h.id).length;
+          const doneToday   = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
+          return `
+            <div class="habit-row ${doneToday ? 'done' : ''}" style="--cc:#10b981;opacity:${doneToday ? '.55' : '1'}">
+              <div class="habit-check ${doneToday ? 'checked' : ''}" style="${doneToday ? 'background:#10b981' : 'border-color:#10b981'}">
+                ${doneToday ? '✓' : ''}
+              </div>
+              <div style="flex:1">
+                <span class="habit-label">${h.label}</span>
+                <span class="log-tag repeat" style="display:block">Repeatable · ${h.points}pts${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
+              </div>
+              <span class="habit-pts" style="color:#10b981">+${h.points}</span>
+            </div>`;
+        }).join('');
+      }
+
+      if (extraRows) {
+        extraRows = `<div class="cat-sub-header" style="color:${cat.color}88">Extra & Bonus</div>` + extraRows;
+      }
+    }
+
     return `
       <div class="cat-group">
         <div class="cat-header" style="color:${cat.color}"><i data-lucide="${cat.icon}" class="icon-sm"></i>${cat.label}</div>
         ${rows}
+        ${extraRows}
       </div>`;
   }).join('');
+
+  container.innerHTML = sections;
 
   container.querySelectorAll('.habit-row.tappable').forEach(row => {
     row.addEventListener('click', () => toggleHabit(row.dataset.habitId, row.dataset.date));

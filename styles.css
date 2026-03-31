@@ -573,6 +573,13 @@ button { cursor: pointer; font-family: var(--fbody); }
   letter-spacing: .07em; text-transform: uppercase;
   margin-bottom: .4rem; padding-left: .2rem;
 }
+.cat-sub-header {
+  font-family: var(--fhead); font-size: .65rem; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase;
+  padding: .55rem .2rem .25rem; margin-top: .3rem;
+  border-top: 1px solid var(--border);
+}
+}
 
 /* Habit rows */
 .habit-row {
