@@ -11,4 +11,4 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 export const PROGRAM_START = '2026-03-24'; // Update if your program starts a different week
 
 // Admin passcode — change this before deploying!
-export const ADMIN_CODE = '1234';
+export const ADMIN_CODE = 'mission42';

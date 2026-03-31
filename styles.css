@@ -566,7 +566,14 @@ button { cursor: pointer; font-family: var(--fbody); }
   user-select: none;
 }
 .collapsible-head:active { opacity: .7; }
-.collapse-chevron { flex-shrink: 0; transition: transform .2s; }
+.collapse-chevron {
+  display: inline-block; vertical-align: middle;
+  width: 18px; height: 18px;
+  color: #fff;
+  margin-left: 5px;
+  flex-shrink: 0;
+  transition: transform .2s;
+}
 .ec-collapse-body { overflow: hidden; }
 .ec-collapse-body.collapsed { display: none; }
 .section-title {
@@ -855,16 +862,16 @@ button { cursor: pointer; font-family: var(--fbody); }
 }
 .weekly-chip {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--rs); padding: .6rem .25rem;
+  border-radius: var(--rs); padding: .75rem .25rem;
   text-align: center; font-size: 1rem;
   position: relative; display: flex; flex-direction: column;
-  align-items: center; gap: .2rem;
+  align-items: center; gap: .35rem;
 }
 .weekly-chip.done {
   background: color-mix(in srgb, var(--cc) 12%, transparent);
   border-color: color-mix(in srgb, var(--cc) 38%, transparent);
 }
-.wc-pts { font-family: var(--fhead); font-size: .58rem; font-weight: 700; color: var(--muted); }
+.wc-pts { font-family: var(--fhead); font-size: .95rem; font-weight: 800; color: var(--muted); }
 .wc-check {
   position: absolute; top: 3px; right: 5px;
   font-size: .6rem; font-weight: 700; color: var(--success);
@@ -1100,8 +1107,8 @@ button { cursor: pointer; font-family: var(--fbody); }
 .cpill-icon svg { width: 13px; height: 13px; stroke-width: 2; }
 
 /* Weekly chip icon */
-.wc-icon { width: 14px; height: 14px; display: block; }
-.wc-icon svg { width: 14px; height: 14px; stroke-width: 2; }
+.wc-icon { width: 18px; height: 18px; display: block; }
+.wc-icon svg { width: 18px; height: 18px; stroke-width: 2; }
 
 /* Leaderboard rank badge */
 .lb-medal { font-family: var(--fhead); font-weight: 800; font-size: .95rem; min-width: 28px; text-align: center; }

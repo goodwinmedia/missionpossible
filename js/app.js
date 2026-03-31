@@ -85,7 +85,7 @@ const state = {
   logSelectionsDate: null,
   adminTaps: 0,
   homeFilter: null,
-  homeCollapsed: { extra: false, bonus: false },
+  homeCollapsed: { extra: true, bonus: true },
   zoneActive: {},
   customHabits: [],   // loaded from DB, merged with static EXTRA_CREDIT / BONUS_TASKS
 };
@@ -403,7 +403,10 @@ function navigate(view) {
   document.getElementById('bottom-nav').style.display  = hideChrome ? 'none' : 'flex';
 
   switch (view) {
-    case 'home':        renderHome();        break;
+    case 'home':
+      state.homeCollapsed = { extra: true, bonus: true };
+      renderHome();
+      break;
     case 'log':         renderLog();         break;
     case 'leaderboard': renderLeaderboard(); break;
     case 'profile':     renderProfile();     break;
@@ -691,7 +694,6 @@ function renderExtraCreditHome() {
   // ── Extra Credit: grouped by category ────────────────────────────────────────
   let ecBody = '';
   if (showExtra) {
-    const ecCollapsed = state.homeCollapsed.extra;
     Object.entries(CATEGORIES).forEach(([key, cat]) => {
       const items = allExtraCredit().filter(h => h.category === key);
       if (!items.length) return;
@@ -732,21 +734,21 @@ function renderExtraCreditHome() {
 
   const ecSection = showExtra ? `
     <div class="section-head collapsible-head" style="margin-top:1.25rem" data-section="extra">
-      <span class="section-title"><i data-lucide="star" class="icon-sm" style="color:#f59e0b;margin-right:4px"></i>Extra Credit</span>
-      <span style="display:flex;align-items:center;gap:.5rem">
-        <span class="section-tap-hint">${ecEarnedPts} / ${ecTotalPts} pts</span>
-        <i data-lucide="${ecCollapsed ? 'chevron-down' : 'chevron-up'}" class="icon-sm collapse-chevron" style="color:var(--muted)"></i>
+      <span class="section-title">
+        <i data-lucide="star" class="icon-sm" style="color:#f59e0b;margin-right:4px"></i>Extra Credit
+        <i data-lucide="${ecCollapsed ? 'chevron-down' : 'chevron-up'}" class="collapse-chevron"></i>
       </span>
+      <span class="section-tap-hint">${ecEarnedPts} / ${ecTotalPts} pts</span>
     </div>
     <div class="ec-collapse-body ${ecCollapsed ? 'collapsed' : ''}">${ecBody}</div>` : '';
 
   const btSection = showBonus ? `
     <div class="section-head collapsible-head" style="margin-top:1.25rem" data-section="bonus">
-      <span class="section-title"><i data-lucide="repeat" class="icon-sm" style="color:#10b981;margin-right:4px"></i>Bonus Tasks</span>
-      <span style="display:flex;align-items:center;gap:.5rem">
-        <span class="section-tap-hint">${btTodayPts} pts earned today</span>
-        <i data-lucide="${btCollapsed ? 'chevron-down' : 'chevron-up'}" class="icon-sm collapse-chevron" style="color:var(--muted)"></i>
+      <span class="section-title">
+        <i data-lucide="repeat" class="icon-sm" style="color:#10b981;margin-right:4px"></i>Bonus Tasks
+        <i data-lucide="${btCollapsed ? 'chevron-down' : 'chevron-up'}" class="collapse-chevron"></i>
       </span>
+      <span class="section-tap-hint">${btTodayPts} pts earned today</span>
     </div>
     <div class="ec-collapse-body ${btCollapsed ? 'collapsed' : ''}">${btBody}</div>` : '';
 
@@ -777,14 +779,19 @@ async function toggleSpecialHabit(habitId) {
   if (!habit) return;
   const today = todayISO();
 
-  // Determine current state before any change
-  const existingEntry = habit.type === 'extra'
-    ? state.myEntries.find(e => e.habit_id === habitId)
-    : state.myEntries.find(e => e.habit_id === habitId && e.date === today);
+  const wasCompleted = habit.type === 'extra'
+    ? state.myEntries.some(e => e.habit_id === habitId)
+    : state.myEntries.some(e => e.habit_id === habitId && e.date === today);
 
-  // Optimistic UI update for instant feedback
-  if (existingEntry) {
-    state.myEntries = state.myEntries.filter(e => e !== existingEntry);
+  const deleteDate = habit.type === 'extra'
+    ? state.myEntries.find(e => e.habit_id === habitId)?.date
+    : today;
+
+  // Optimistic update — mirrors toggleHabit exactly
+  if (wasCompleted) {
+    state.myEntries = habit.type === 'extra'
+      ? state.myEntries.filter(e => e.habit_id !== habitId)
+      : state.myEntries.filter(e => !(e.habit_id === habitId && e.date === today));
   } else {
     state.myEntries.push({ habit_id: habitId, date: today, category: habit.category, points: habit.points, type: habit.type, user_id: state.user.id });
   }
@@ -792,29 +799,18 @@ async function toggleSpecialHabit(habitId) {
   renderHome();
 
   try {
-    if (existingEntry) {
-      // Delete by user_id+habit_id+date — no need for the entry's DB id
-      await db.deleteEntry(state.user.id, habitId, existingEntry.date);
+    if (wasCompleted) {
+      await db.deleteEntry(state.user.id, habitId, deleteDate);
     } else {
-      // Upsert (same path as submitLog) — handles uniqueness constraints gracefully
-      await db.batchUpsertEntries([{ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date: today }]);
+      await db.addEntry({ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date: today });
     }
-    // Reload from DB to guarantee accuracy
-    [state.myEntries, state.allEntries] = await Promise.all([
-      db.getEntriesForUser(state.user.id),
-      db.getAllEntries(),
-    ]);
+    // Refresh state silently — no re-render needed (optimistic already correct)
+    state.myEntries = await db.getEntriesForUser(state.user.id);
     updateStats();
-    renderHome();
   } catch (err) {
     console.error('toggleSpecialHabit error:', err);
     // Revert optimistic update
-    try {
-      [state.myEntries, state.allEntries] = await Promise.all([
-        db.getEntriesForUser(state.user.id),
-        db.getAllEntries(),
-      ]);
-    } catch (_) {}
+    state.myEntries = await db.getEntriesForUser(state.user.id).catch(() => state.myEntries);
     updateStats();
     renderHome();
     showToast('Save failed', 'error');
@@ -1529,7 +1525,6 @@ function bindEvents() {
   document.getElementById('btn-submit-log').addEventListener('click', submitLog);
 
   document.getElementById('btn-edit-name').addEventListener('click', showNameEditor);
-  document.getElementById('btn-change-mission').addEventListener('click', showMissionPicker);
 
   document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('mp_user');
