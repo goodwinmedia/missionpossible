@@ -78,16 +78,12 @@ button { cursor: pointer; font-family: var(--fbody); }
   z-index: 200;
 }
 .loading-inner { text-align: center; animation: fadeUp .5s ease; }
-.loading-icon { font-size: 3.5rem; margin-bottom: .75rem; filter: drop-shadow(0 0 24px #7c3aed99); }
-.loading-title {
-  font-family: var(--fhead);
-  font-size: 1.75rem;
-  font-weight: 800;
-  background: var(--grad);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 1.5rem;
+.loading-logo {
+  width: clamp(200px, 65vw, 300px);
+  height: auto;
+  display: block;
+  margin: 0 auto 2rem;
+  filter: drop-shadow(0 0 28px rgba(150,50,255,0.6));
 }
 .loading-dots { display: flex; justify-content: center; gap: .4rem; }
 .loading-dots span {
@@ -437,12 +433,6 @@ button { cursor: pointer; font-family: var(--fbody); }
 .flame { font-size: .95rem; }
 .streak-num {
   font-family: var(--fhead); font-weight: 700; font-size: .88rem; color: #f59e0b;
-}
-.hdr-logo {
-  height: 36px;
-  width: auto;
-  display: block;
-  filter: drop-shadow(0 0 6px rgba(150,50,255,0.4));
 }
 .pts-pill {
   display: flex; align-items: center; gap: .2rem;
