@@ -221,6 +221,9 @@ async function loginUser(user, remember = true) {
   document.getElementById('loading-screen').classList.add('hidden');
   document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('main-app').classList.remove('hidden');
+  if (user.district_role) {
+    document.getElementById('nav-district-btn').classList.remove('hidden');
+  }
   updateHeader();
   navigate('home');
   setupRealtime();
@@ -410,6 +413,7 @@ function navigate(view) {
     case 'log':         renderLog();         break;
     case 'leaderboard': renderLeaderboard(); break;
     case 'profile':     renderProfile();     break;
+    case 'district':    renderDistrict();    break;
     case 'admin':       renderAdmin();       break;
   }
 }
@@ -1069,6 +1073,60 @@ function renderPeopleLeaderboard() {
     </div>`).join('');
 }
 
+// ── DISTRICT VIEW ─────────────────────────────────────────────────────────────
+
+function renderDistrict() {
+  const container = document.getElementById('district-view-content');
+  if (!container || !state.user.district) return;
+
+  const userPtsMap = {};
+  state.allEntries.forEach(e => {
+    userPtsMap[e.user_id] = (userPtsMap[e.user_id] || 0) + e.points;
+  });
+
+  const members = state.allUsers
+    .filter(u => u.district === state.user.district)
+    .map(u => ({ ...u, pts: userPtsMap[u.id] || 0 }))
+    .sort((a, b) => b.pts - a.pts);
+
+  const zone  = ZONES.find(z => z.id === state.user.zone_id);
+  const dl    = members.find(m => m.district_role === 'leader');
+  const stl   = members.find(m => m.district_role === 'stl');
+
+  container.innerHTML = `
+    <div class="district-header">
+      <h2 class="district-title">${state.user.district}</h2>
+      <div class="district-leaders">
+        ${dl  ? `<span class="district-leader-pill leader"><i data-lucide="star" style="width:11px;height:11px;margin-right:3px"></i>${dl.name}</span>` : ''}
+        ${stl ? `<span class="district-leader-pill stl"><i data-lucide="star" style="width:11px;height:11px;margin-right:3px"></i>${stl.name}</span>` : ''}
+      </div>
+    </div>
+
+    <div class="district-list">
+      ${members.map((m, i) => {
+        const isSelf    = m.id === state.user.id;
+        const mFlag     = m.mission ? m.mission.split(' ')[0] : '🌍';
+        const mName     = m.mission ? m.mission.split(' ').slice(1).join(' ') : 'Unassigned';
+        const mZone     = ZONES.find(z => z.id === m.zone_id);
+        const initials  = m.name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+        const roleLabel = m.district_role === 'leader' ? ' · DL' : m.district_role === 'stl' ? ' · STL' : '';
+        return `
+          <div class="district-member-row ${isSelf ? 'self' : ''}">
+            <span class="dm-rank">${i + 1}</span>
+            <div class="dm-avatar" style="background:${mZone?.color || '#6b7280'}">${initials}</div>
+            <div class="dm-info">
+              <span class="dm-name">${m.name}${roleLabel ? `<span class="dm-role">${roleLabel}</span>` : ''}</span>
+              <span class="dm-mission">${mFlag} ${mName}</span>
+              ${m.companion ? `<span class="dm-companion"><i data-lucide="users" style="width:10px;height:10px;margin-right:2px;vertical-align:middle"></i>${m.companion}</span>` : ''}
+            </div>
+            <span class="dm-pts">${m.pts}<span class="dm-pts-lbl"> pts</span></span>
+          </div>`;
+      }).join('')}
+    </div>`;
+
+  if (window.lucide) lucide.createIcons();
+}
+
 // ── PROFILE VIEW ──────────────────────────────────────────────────────────────
 
 function renderProfile() {
@@ -1134,6 +1192,48 @@ function renderProfile() {
     state.adminTaps = (state.adminTaps || 0) + 1;
     if (state.adminTaps >= 5) { state.adminTaps = 0; promptAdmin(); }
   };
+
+  // ── Companion card ─────────────────────────────────────────
+  let companionCard = document.getElementById('profile-companion-card');
+  if (state.user.companion) {
+    const compUser   = state.allUsers.find(u => u.name === state.user.companion);
+    const compMission = compUser?.mission || '';
+    const compFlag   = compMission ? compMission.split(' ')[0] : '🌍';
+    const compName_  = compMission ? compMission.split(' ').slice(1).join(' ') : '';
+    if (!companionCard) {
+      companionCard = document.createElement('div');
+      companionCard.id = 'profile-companion-card';
+      companionCard.className = 'profile-card companion-card';
+      document.getElementById('weekly-progress-grid').closest('.profile-card').after(companionCard);
+    }
+    companionCard.innerHTML = `
+      <h3 class="card-label">My Companion</h3>
+      <div class="companion-name">${state.user.companion}</div>
+      ${compName_ ? `<div class="companion-mission">${compFlag} ${compName_}</div>` : ''}`;
+  } else if (companionCard) {
+    companionCard.remove();
+  }
+
+  // ── District info card ─────────────────────────────────────
+  let districtCard = document.getElementById('profile-district-card');
+  if (state.user.district) {
+    const dl  = state.allUsers.find(u => u.district === state.user.district && u.district_role === 'leader');
+    const stl = state.allUsers.find(u => u.district === state.user.district && u.district_role === 'stl');
+    if (!districtCard) {
+      districtCard = document.createElement('div');
+      districtCard.id = 'profile-district-card';
+      districtCard.className = 'profile-card';
+      (companionCard || document.getElementById('weekly-progress-grid').closest('.profile-card')).after(districtCard);
+    }
+    districtCard.innerHTML = `
+      <h3 class="card-label">My District</h3>
+      <div class="district-info-row"><span class="di-label">District</span><span class="di-val">${state.user.district}</span></div>
+      ${dl  ? `<div class="district-info-row"><span class="di-label">District Leader</span><span class="di-val">${dl.name}</span></div>` : ''}
+      ${stl ? `<div class="district-info-row"><span class="di-label">Sister Training Leader</span><span class="di-val">${stl.name}</span></div>` : ''}
+      ${state.user.district_role ? `<div class="district-role-badge">${state.user.district_role === 'leader' ? '⭐ District Leader' : '⭐ Sister Training Leader'}</div>` : ''}`;
+  } else if (districtCard) {
+    districtCard.remove();
+  }
 
   // ── Customize colors ──────────────────────────────────────
   const custToggle = document.getElementById('btn-customize-toggle');
@@ -1282,8 +1382,12 @@ async function renderAdmin() {
               <option value="extra">Extra Credit (one-time)</option>
               <option value="repeat">Bonus Task (repeatable)</option>
             </select>
-            <input type="number" id="ch-points" value="5" min="1" max="50" class="ch-pts-input">
-            <button type="submit" class="btn-primary ch-add-btn">Add</button>
+          </div>
+          <div class="ch-row ch-bottom-row">
+            <label class="ch-pts-label">Pts
+              <input type="number" id="ch-points" value="5" min="1" max="50" class="ch-pts-input">
+            </label>
+            <button type="submit" class="ch-add-btn">+ Add Challenge</button>
           </div>
         </form>
         <div id="custom-habits-list">

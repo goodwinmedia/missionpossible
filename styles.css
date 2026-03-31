@@ -1053,18 +1053,30 @@ button { cursor: pointer; font-family: var(--fbody); }
   font-size: .85rem; margin-bottom: .45rem; box-sizing: border-box;
 }
 .ch-input:focus { outline: none; border-color: var(--accent); }
-.ch-row { display: flex; gap: .4rem; align-items: center; }
+.ch-row { display: flex; gap: .4rem; align-items: center; margin-bottom: .45rem; }
 .ch-select {
   flex: 1; background: var(--surface); border: 1px solid var(--border);
   color: var(--text); border-radius: var(--rs); padding: .55rem .5rem;
   font-size: .78rem; min-width: 0;
 }
-.ch-pts-input {
-  width: 52px; background: var(--surface); border: 1px solid var(--border);
-  color: var(--text); border-radius: var(--rs); padding: .55rem .5rem;
-  font-size: .82rem; text-align: center; flex-shrink: 0;
+.ch-bottom-row { margin-bottom: 0; }
+.ch-pts-label {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .75rem; color: var(--muted); flex-shrink: 0;
 }
-.ch-add-btn { flex-shrink: 0; padding: .55rem 1rem; font-size: .82rem; }
+.ch-pts-input {
+  width: 48px; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--rs); padding: .5rem .4rem;
+  font-size: .82rem; text-align: center;
+}
+.ch-add-btn {
+  flex: 1;
+  background: var(--accent); color: #fff;
+  border: none; border-radius: var(--rs);
+  padding: .55rem .9rem; font-size: .82rem; font-weight: 600;
+  cursor: pointer; transition: opacity .15s;
+}
+.ch-add-btn:hover { opacity: .85; }
 
 /* ── BOTTOM NAV ──────────────────────────────────────────── */
 #bottom-nav {
@@ -1228,3 +1240,90 @@ button { cursor: pointer; font-family: var(--fbody); }
     box-shadow: 0 0 80px rgba(124,58,237,.08);
   }
 }
+
+/* ── COMPANION & DISTRICT PROFILE CARDS ─────────────────── */
+.companion-card .companion-name {
+  font-family: var(--fhead); font-size: 1.05rem; font-weight: 700;
+  color: var(--text); margin-bottom: .2rem;
+}
+.companion-card .companion-mission {
+  font-size: .8rem; color: var(--muted);
+}
+.district-info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .35rem 0; border-bottom: 1px solid var(--border);
+}
+.district-info-row:last-child { border-bottom: none; }
+.di-label { font-size: .78rem; color: var(--muted); }
+.di-val   { font-size: .82rem; font-weight: 600; color: var(--text); text-align: right; }
+.district-role-badge {
+  margin-top: .6rem;
+  display: inline-block;
+  background: var(--grad);
+  color: #fff; font-size: .72rem; font-weight: 700;
+  padding: .25rem .65rem; border-radius: 999px;
+}
+
+/* ── DISTRICT VIEW ───────────────────────────────────────── */
+.district-header {
+  padding: 1.25rem 1rem .75rem;
+}
+.district-title {
+  font-family: var(--fhead); font-size: 1.3rem; font-weight: 800;
+  color: var(--text); margin: 0 0 .5rem;
+}
+.district-leaders {
+  display: flex; gap: .45rem; flex-wrap: wrap;
+}
+.district-leader-pill {
+  display: inline-flex; align-items: center;
+  font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+  padding: .2rem .55rem; border-radius: 999px;
+}
+.district-leader-pill.leader { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44; }
+.district-leader-pill.stl    { background: #a855f722; color: #a855f7; border: 1px solid #a855f744; }
+
+.district-list {
+  padding: 0 .75rem 5rem;
+  display: flex; flex-direction: column; gap: .5rem;
+}
+.district-member-row {
+  display: flex; align-items: center; gap: .75rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--rs); padding: .75rem .85rem;
+}
+.district-member-row.self {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+}
+.dm-rank {
+  font-family: var(--fhead); font-size: .95rem; font-weight: 800;
+  color: var(--muted); min-width: 22px; text-align: center; flex-shrink: 0;
+}
+.dm-avatar {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--fhead); font-size: .78rem; font-weight: 800; color: #fff;
+}
+.dm-info {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: .08rem;
+}
+.dm-name {
+  font-size: .88rem; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dm-role { font-size: .72rem; font-weight: 600; color: var(--accent); margin-left: .3rem; }
+.dm-mission {
+  font-size: .72rem; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dm-companion {
+  font-size: .68rem; color: var(--dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dm-pts {
+  font-family: var(--fhead); font-size: 1.05rem; font-weight: 800;
+  color: var(--accent); flex-shrink: 0; text-align: right;
+}
+.dm-pts-lbl { font-size: .65rem; font-weight: 600; color: var(--muted); }
