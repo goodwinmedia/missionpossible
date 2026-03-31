@@ -1113,6 +1113,8 @@ button { cursor: pointer; font-family: var(--fbody); }
   border-bottom: 1px solid var(--border);
   transition: background .15s;
 }
+.ec-home-row.tappable { cursor: pointer; }
+.ec-home-row.tappable:active { background: rgba(255,255,255,.05); }
 .ec-home-row:last-of-type { border-bottom: none; }
 .ec-home-row.done { opacity: .5; }
 .ec-check {

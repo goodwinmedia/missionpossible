@@ -682,35 +682,42 @@ function renderExtraCreditHome() {
       ${allExtraCredit().map(h => {
         const done = state.myEntries.some(e => e.habit_id === h.id);
         return `
-          <div class="ec-home-row ${done ? 'done' : ''}">
+          <div class="ec-home-row tappable ${done ? 'done' : ''}" data-habit-id="${h.id}">
             <div class="ec-check ${done ? 'checked' : ''}">${done ? '✓' : ''}</div>
-            <span class="ec-home-label">${h.label}</span>
+            <div style="flex:1">
+              <span class="ec-home-label">${h.label}</span>
+              <span class="log-tag extra" style="display:block">One-time · ${h.points}pts</span>
+            </div>
             <span class="ec-home-pts" style="color:#f59e0b">${done ? '✓' : `+${h.points}`}</span>
           </div>`;
       }).join('')}
-      <p class="ec-hint">Log one-time extra credit in the <strong>Log</strong> tab</p>
     </div>` : '';
 
   const btSection = showBonus ? `
     <div class="section-head" style="margin-top:1.25rem">
       <span class="section-title"><i data-lucide="repeat" class="icon-sm" style="color:#10b981;margin-right:4px"></i>Bonus Tasks</span>
-      <span class="section-tap-hint">${btTodayPts} pts earned total</span>
+      <span class="section-tap-hint">${btTodayPts} pts earned today</span>
     </div>
     <div class="ec-home-list">
       ${allBonusTasks().map(h => {
         const timesLogged = state.myEntries.filter(e => e.habit_id === h.id).length;
         const doneToday   = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
         return `
-          <div class="ec-home-row ${doneToday ? 'done' : ''}">
+          <div class="ec-home-row tappable ${doneToday ? 'done' : ''}" data-habit-id="${h.id}">
             <div class="ec-check ${doneToday ? 'checked' : ''}" style="${doneToday ? 'background:#10b981' : 'border-color:#10b981'}">${doneToday ? '✓' : ''}</div>
-            <span class="ec-home-label">${h.label}</span>
+            <div style="flex:1">
+              <span class="ec-home-label">${h.label}</span>
+              <span class="log-tag repeat" style="display:block">Repeatable · ${h.points}pts${timesLogged > 0 ? ` · ×${timesLogged} total` : ''}</span>
+            </div>
             <span class="ec-home-pts" style="color:#10b981">${timesLogged > 0 ? `×${timesLogged}` : `+${h.points}`}</span>
           </div>`;
       }).join('')}
-      <p class="ec-hint">Repeatable daily — log them in the <strong>Log</strong> tab</p>
     </div>` : '';
 
   container.innerHTML = ecSection + btSection;
+  container.querySelectorAll('.ec-home-row.tappable').forEach(row => {
+    row.addEventListener('click', () => toggleSpecialHabit(row.dataset.habitId));
+  });
   if (window.lucide) lucide.createIcons();
 }
 
