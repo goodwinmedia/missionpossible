@@ -980,7 +980,7 @@ function renderPeopleLeaderboard() {
 
   document.getElementById('lb-people').innerHTML = people.map((p, i) => `
     <div class="lb-person-row ${p.isMe ? 'is-me' : ''}">
-      <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i < 3 ? i + 1 : `#${i + 1}`}</span>
+      <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i < 3 ? i + 1 : i + 1}</span>
       <div class="lb-avatar" style="background:${p.zone?.color || '#6b7280'}">${getInitials(p.name)}</div>
       <div class="lb-person-info">
         <div class="lb-person-name">${p.name}${p.isMe ? ' <span class="you-tag">you</span>' : ''}</div>
@@ -1026,7 +1026,7 @@ function renderProfile() {
 
   document.getElementById('stat-total-pts').textContent = total;
   document.getElementById('stat-streak').textContent    = streak;
-  document.getElementById('stat-rank').textContent      = rank ? `#${rank}` : '#–';
+  document.getElementById('stat-rank').textContent      = rank ? `${rank}` : '–';
 
   const maxCat = Math.max(...Object.values(catPts), 1);
   document.getElementById('breakdown-bars').innerHTML = Object.entries(CATEGORIES).map(([key, cat]) => `
