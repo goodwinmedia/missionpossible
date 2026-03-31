@@ -90,8 +90,8 @@ const state = {
 };
 
 // Helpers that merge static + custom habits
-function allExtraCredit() { return [...allExtraCredit(), ...state.customHabits.filter(h => h.type === 'extra')]; }
-function allBonusTasks()   { return [...allBonusTasks(),  ...state.customHabits.filter(h => h.type === 'repeat')]; }
+function allExtraCredit() { return [...EXTRA_CREDIT, ...state.customHabits.filter(h => h.type === 'extra')]; }
+function allBonusTasks()   { return [...BONUS_TASKS,  ...state.customHabits.filter(h => h.type === 'repeat')]; }
 function findHabit(id)     { return getHabitById(id) || state.customHabits.find(h => h.id === id); }
 
 // ── THEME / COLOR PREFS ───────────────────────────────────────────────────────
@@ -171,7 +171,7 @@ async function init() {
       showConfigError();
     } else {
       console.error(err);
-      await loadOnboarding();
+      if (!state.user) await loadOnboarding();
     }
   }
 }
