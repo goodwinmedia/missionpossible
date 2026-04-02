@@ -1094,29 +1094,40 @@ function renderDistrictLeaderboard() {
     userPoints[e.user_id] = (userPoints[e.user_id] || 0) + e.points;
   });
 
+  const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
+
+  // Named districts from user data
   const districtNames = [...new Set(
     state.allUsers.filter(u => u.district).map(u => u.district)
   )].sort();
 
-  const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
-
-  const districts = districtNames.map(name => {
+  const groups = districtNames.map(name => {
     const members = state.allUsers.filter(u => u.district === name);
     const points  = members.reduce((s, u) => s + (userPoints[u.id] || 0), 0);
     const hasMe   = members.some(u => u.id === state.user?.id);
     const dl      = members.find(m => m.district_role === 'leader');
     const stl     = members.find(m => m.district_role === 'stl');
-    return { name, members, points, hasMe, dl, stl };
-  }).sort((a, b) => b.points - a.points);
+    return { name, members, points, hasMe, dl, stl, isAdult: false };
+  });
 
-  const ranks = tiedRanks(districts, d => d.points);
+  // Virtual "Adult Leaders" group — anyone in zone 7
+  const adultMembers = state.allUsers.filter(u => u.zone_id === 7);
+  if (adultMembers.length) {
+    const points = adultMembers.reduce((s, u) => s + (userPoints[u.id] || 0), 0);
+    const hasMe  = adultMembers.some(u => u.id === state.user?.id);
+    groups.push({ name: 'Adult Leaders', members: adultMembers, points, hasMe, dl: null, stl: null, isAdult: true });
+  }
 
-  document.getElementById('lb-districts').innerHTML = districts.map((d, i) => {
+  groups.sort((a, b) => b.points - a.points);
+  const ranks = tiedRanks(groups, d => d.points);
+
+  document.getElementById('lb-districts').innerHTML = groups.map((d, i) => {
     const r = ranks[i];
+    const accentColor = d.isAdult ? '#6b7280' : 'var(--accent)';
     return `
     <div class="lb-person-row ${d.hasMe ? 'is-me' : ''}">
       <span class="lb-medal" ${r <= 3 ? `style="color:${medalColors[r - 1]}"` : ''}>${r}</span>
-      <div class="lb-avatar" style="background:var(--accent)">${r}</div>
+      <div class="lb-avatar" style="background:${accentColor}">${r}</div>
       <div class="lb-person-info">
         <div class="lb-person-name">${d.name}${d.hasMe ? ' <span class="you-tag">you</span>' : ''}</div>
         <div class="lb-person-zone" style="color:var(--dim)">
