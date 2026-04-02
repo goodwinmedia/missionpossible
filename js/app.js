@@ -86,6 +86,7 @@ const state = {
   adminTaps: 0,
   homeFilter: null,
   homeCollapsed: { extra: true, bonus: true },
+  lbDistrict: 'all',
   zoneActive: {},
   customHabits: [],   // loaded from DB, merged with static EXTRA_CREDIT / BONUS_TASKS
 };
@@ -1037,6 +1038,15 @@ async function submitLog() {
 
 function renderLeaderboard() {
   renderPeopleLeaderboard();
+
+  // District tabs
+  document.querySelectorAll('#lb-district-tabs .lb-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.district === state.lbDistrict);
+    btn.onclick = () => {
+      state.lbDistrict = btn.dataset.district;
+      renderLeaderboard();
+    };
+  });
 }
 
 function aggregateData() {
@@ -1045,15 +1055,20 @@ function aggregateData() {
     userPoints[e.user_id] = (userPoints[e.user_id] || 0) + e.points;
   });
 
-  const people = state.allUsers
+  let people = state.allUsers
     .filter(u => state.zoneActive[u.zone_id] !== false)
     .map(u => ({
       ...u,
       zone: ZONES.find(z => z.id === u.zone_id),
       points: userPoints[u.id] || 0,
       isMe: u.id === state.user?.id,
-    })).sort((a, b) => b.points - a.points);
+    }));
 
+  if (state.lbDistrict && state.lbDistrict !== 'all') {
+    people = people.filter(u => u.district === state.lbDistrict);
+  }
+
+  people.sort((a, b) => b.points - a.points);
   return { people };
 }
 
