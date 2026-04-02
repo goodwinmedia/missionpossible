@@ -87,6 +87,7 @@ const state = {
   homeFilter: null,
   homeCollapsed: { extra: true, bonus: true },
   lbDistrict: 'all',
+  lbView: 'people',
   zoneActive: {},
   customHabits: [],   // loaded from DB, merged with static EXTRA_CREDIT / BONUS_TASKS
 };
@@ -1037,16 +1038,24 @@ async function submitLog() {
 // ── LEADERBOARD VIEW ──────────────────────────────────────────────────────────
 
 function renderLeaderboard() {
-  renderPeopleLeaderboard();
+  const peopleEl    = document.getElementById('lb-people');
+  const districtsEl = document.getElementById('lb-districts');
 
-  // District tabs
-  document.querySelectorAll('#lb-district-tabs .lb-tab').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.district === state.lbDistrict);
-    btn.onclick = () => {
-      state.lbDistrict = btn.dataset.district;
-      renderLeaderboard();
-    };
+  // View tabs
+  document.querySelectorAll('#lb-view-tabs .lb-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lbview === state.lbView);
+    btn.onclick = () => { state.lbView = btn.dataset.lbview; renderLeaderboard(); };
   });
+
+  if (state.lbView === 'people') {
+    peopleEl.style.display    = '';
+    districtsEl.style.display = 'none';
+    renderPeopleLeaderboard();
+  } else {
+    peopleEl.style.display    = 'none';
+    districtsEl.style.display = '';
+    renderDistrictLeaderboard();
+  }
 }
 
 function aggregateData() {
@@ -1055,21 +1064,54 @@ function aggregateData() {
     userPoints[e.user_id] = (userPoints[e.user_id] || 0) + e.points;
   });
 
-  let people = state.allUsers
+  const people = state.allUsers
     .filter(u => state.zoneActive[u.zone_id] !== false)
     .map(u => ({
       ...u,
       zone: ZONES.find(z => z.id === u.zone_id),
       points: userPoints[u.id] || 0,
       isMe: u.id === state.user?.id,
-    }));
+    }))
+    .sort((a, b) => b.points - a.points);
 
-  if (state.lbDistrict && state.lbDistrict !== 'all') {
-    people = people.filter(u => u.district === state.lbDistrict);
-  }
-
-  people.sort((a, b) => b.points - a.points);
   return { people };
+}
+
+function renderDistrictLeaderboard() {
+  const userPoints = {};
+  state.allEntries.forEach(e => {
+    userPoints[e.user_id] = (userPoints[e.user_id] || 0) + e.points;
+  });
+
+  const districtNames = [...new Set(
+    state.allUsers.filter(u => u.district).map(u => u.district)
+  )].sort();
+
+  const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
+
+  const districts = districtNames.map(name => {
+    const members = state.allUsers.filter(u => u.district === name);
+    const points  = members.reduce((s, u) => s + (userPoints[u.id] || 0), 0);
+    const hasMe   = members.some(u => u.id === state.user?.id);
+    const dl      = members.find(m => m.district_role === 'leader');
+    const stl     = members.find(m => m.district_role === 'stl');
+    return { name, members, points, hasMe, dl, stl };
+  }).sort((a, b) => b.points - a.points);
+
+  document.getElementById('lb-districts').innerHTML = districts.map((d, i) => `
+    <div class="lb-person-row ${d.hasMe ? 'is-me' : ''}">
+      <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i + 1}</span>
+      <div class="lb-avatar" style="background:var(--accent)">${i + 1}</div>
+      <div class="lb-person-info">
+        <div class="lb-person-name">${d.name}${d.hasMe ? ' <span class="you-tag">you</span>' : ''}</div>
+        <div class="lb-person-zone" style="color:var(--dim)">
+          ${d.members.length} members
+          ${d.dl  ? ` · <span style="color:#f59e0b">DL: ${d.dl.name.split(' ')[0]}</span>` : ''}
+          ${d.stl ? ` · <span style="color:#a78bfa">STL: ${d.stl.name.split(' ')[0]}</span>` : ''}
+        </div>
+      </div>
+      <div class="lb-person-pts">${d.points}<span>pts</span></div>
+    </div>`).join('');
 }
 
 function renderPeopleLeaderboard() {
