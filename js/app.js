@@ -1077,6 +1077,17 @@ function aggregateData() {
   return { people };
 }
 
+// Returns an array of competition ranks (1,1,3,4…) for a sorted-by-points array
+function tiedRanks(items, getPoints) {
+  const ranks = [];
+  let rank = 1;
+  for (let i = 0; i < items.length; i++) {
+    if (i > 0 && getPoints(items[i]) < getPoints(items[i - 1])) rank = i + 1;
+    ranks.push(rank);
+  }
+  return ranks;
+}
+
 function renderDistrictLeaderboard() {
   const userPoints = {};
   state.allEntries.forEach(e => {
@@ -1098,10 +1109,14 @@ function renderDistrictLeaderboard() {
     return { name, members, points, hasMe, dl, stl };
   }).sort((a, b) => b.points - a.points);
 
-  document.getElementById('lb-districts').innerHTML = districts.map((d, i) => `
+  const ranks = tiedRanks(districts, d => d.points);
+
+  document.getElementById('lb-districts').innerHTML = districts.map((d, i) => {
+    const r = ranks[i];
+    return `
     <div class="lb-person-row ${d.hasMe ? 'is-me' : ''}">
-      <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i + 1}</span>
-      <div class="lb-avatar" style="background:var(--accent)">${i + 1}</div>
+      <span class="lb-medal" ${r <= 3 ? `style="color:${medalColors[r - 1]}"` : ''}>${r}</span>
+      <div class="lb-avatar" style="background:var(--accent)">${r}</div>
       <div class="lb-person-info">
         <div class="lb-person-name">${d.name}${d.hasMe ? ' <span class="you-tag">you</span>' : ''}</div>
         <div class="lb-person-zone" style="color:var(--dim)">
@@ -1111,18 +1126,22 @@ function renderDistrictLeaderboard() {
         </div>
       </div>
       <div class="lb-person-pts">${d.points}<span>pts</span></div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderPeopleLeaderboard() {
   const { people } = aggregateData();
   const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
+  const ranks = tiedRanks(people, p => p.points);
 
   document.getElementById('lb-people').innerHTML = people.map((p, i) => {
+    const r = ranks[i];
+    const medal = r <= 3 ? `style="color:${medalColors[r - 1]}"` : '';
     if (p.isMe) {
       return `
       <div class="lb-person-row is-me">
-        <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i + 1}</span>
+        <span class="lb-medal" ${medal}>${r}</span>
         <div class="lb-avatar" style="background:${p.zone?.color || '#6b7280'}">${getInitials(p.name)}</div>
         <div class="lb-person-info">
           <div class="lb-person-name">${p.name} <span class="you-tag">you</span></div>
@@ -1133,11 +1152,11 @@ function renderPeopleLeaderboard() {
     }
     return `
       <div class="lb-person-row lb-blurred">
-        <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i + 1}</span>
+        <span class="lb-medal" ${medal}>${r}</span>
         <div class="lb-avatar lb-avatar-blur"></div>
         <div class="lb-person-info">
-          <div class="lb-person-name lb-name-blur">████████</div>
-          <div class="lb-person-zone lb-zone-blur">███</div>
+          <div class="lb-person-name lb-name-blur">${p.name}</div>
+          <div class="lb-person-zone lb-zone-blur">${p.zone?.name || '&nbsp;'}</div>
         </div>
         <div class="lb-person-pts">${p.points}<span>pts</span></div>
       </div>`;

@@ -794,18 +794,12 @@ button { cursor: pointer; font-family: var(--fbody); }
   filter: blur(0);
 }
 .lb-name-blur {
-  color: transparent;
-  background: var(--border);
-  border-radius: 4px;
+  filter: blur(5px);
   user-select: none;
-  filter: blur(4px);
   font-size: .9rem; font-weight: 600;
 }
 .lb-zone-blur {
-  color: transparent;
-  background: var(--border);
-  border-radius: 3px;
-  filter: blur(3px);
+  filter: blur(4px);
   font-size: .7rem;
   display: inline-block;
   margin-top: .1rem;
