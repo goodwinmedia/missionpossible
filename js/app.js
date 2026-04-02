@@ -1118,16 +1118,30 @@ function renderPeopleLeaderboard() {
   const { people } = aggregateData();
   const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
 
-  document.getElementById('lb-people').innerHTML = people.map((p, i) => `
-    <div class="lb-person-row ${p.isMe ? 'is-me' : ''}">
-      <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i < 3 ? i + 1 : i + 1}</span>
-      <div class="lb-avatar" style="background:${p.zone?.color || '#6b7280'}">${getInitials(p.name)}</div>
-      <div class="lb-person-info">
-        <div class="lb-person-name">${p.name}${p.isMe ? ' <span class="you-tag">you</span>' : ''}</div>
-        <div class="lb-person-zone" style="color:${p.zone?.color || '#94a3b8'}">${p.zone?.name || ''}</div>
-      </div>
-      <div class="lb-person-pts">${p.points}<span>pts</span></div>
-    </div>`).join('');
+  document.getElementById('lb-people').innerHTML = people.map((p, i) => {
+    if (p.isMe) {
+      return `
+      <div class="lb-person-row is-me">
+        <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i + 1}</span>
+        <div class="lb-avatar" style="background:${p.zone?.color || '#6b7280'}">${getInitials(p.name)}</div>
+        <div class="lb-person-info">
+          <div class="lb-person-name">${p.name} <span class="you-tag">you</span></div>
+          <div class="lb-person-zone" style="color:${p.zone?.color || '#94a3b8'}">${p.zone?.name || ''}</div>
+        </div>
+        <div class="lb-person-pts">${p.points}<span>pts</span></div>
+      </div>`;
+    }
+    return `
+      <div class="lb-person-row lb-blurred">
+        <span class="lb-medal" ${i < 3 ? `style="color:${medalColors[i]}"` : ''}>${i + 1}</span>
+        <div class="lb-avatar lb-avatar-blur"></div>
+        <div class="lb-person-info">
+          <div class="lb-person-name lb-name-blur">████████</div>
+          <div class="lb-person-zone lb-zone-blur">███</div>
+        </div>
+        <div class="lb-person-pts">${p.points}<span>pts</span></div>
+      </div>`;
+  }).join('');
 }
 
 // ── DISTRICT VIEW ─────────────────────────────────────────────────────────────
