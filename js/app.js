@@ -88,6 +88,9 @@ const state = {
   homeCollapsed: { extra: true, bonus: true },
   lbDistrict: 'all',
   lbView: 'people',
+  lbRevealTaps: 0,
+  lbRevealed: false,
+  lbRevealTimer: null,
   zoneActive: {},
   customHabits: [],   // loaded from DB, merged with static EXTRA_CREDIT / BONUS_TASKS
 };
@@ -1145,17 +1148,18 @@ function renderPeopleLeaderboard() {
   const { people } = aggregateData();
   const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
   const ranks = tiedRanks(people, p => p.points);
+  const revealed = state.lbRevealed;
 
   document.getElementById('lb-people').innerHTML = people.map((p, i) => {
     const r = ranks[i];
     const medal = r <= 3 ? `style="color:${medalColors[r - 1]}"` : '';
-    if (p.isMe) {
+    if (p.isMe || revealed) {
       return `
-      <div class="lb-person-row is-me">
+      <div class="lb-person-row ${p.isMe ? 'is-me' : ''}">
         <span class="lb-medal" ${medal}>${r}</span>
         <div class="lb-avatar" style="background:${p.zone?.color || '#6b7280'}">${getInitials(p.name)}</div>
         <div class="lb-person-info">
-          <div class="lb-person-name">${p.name} <span class="you-tag">you</span></div>
+          <div class="lb-person-name">${p.name}${p.isMe ? ' <span class="you-tag">you</span>' : ''}</div>
           <div class="lb-person-zone" style="color:${p.zone?.color || '#94a3b8'}">${p.zone?.name || ''}</div>
         </div>
         <div class="lb-person-pts">${p.points}<span>pts</span></div>
@@ -1172,7 +1176,28 @@ function renderPeopleLeaderboard() {
         <div class="lb-person-pts">${p.points}<span>pts</span></div>
       </div>`;
   }).join('');
-}
+
+  // Easter egg: tap 10 times anywhere on the list to reveal for 30s
+  const container = document.getElementById('lb-people');
+  if (!container.dataset.eggBound) {
+    container.dataset.eggBound = '1';
+    container.addEventListener('click', () => {
+      if (state.lbRevealed) return;
+      state.lbRevealTaps = (state.lbRevealTaps || 0) + 1;
+      if (state.lbRevealTaps >= 10) {
+        state.lbRevealTaps = 0;
+        state.lbRevealed = true;
+        renderPeopleLeaderboard();
+        showToast('🔍 Names revealed for 30s', 'success');
+        if (state.lbRevealTimer) clearTimeout(state.lbRevealTimer);
+        state.lbRevealTimer = setTimeout(() => {
+          state.lbRevealed = false;
+          state.lbRevealTimer = null;
+          renderPeopleLeaderboard();
+        }, 30000);
+      }
+    });
+  }
 
 // ── DISTRICT VIEW ─────────────────────────────────────────────────────────────
 
