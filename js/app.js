@@ -1198,6 +1198,7 @@ function renderPeopleLeaderboard() {
       }
     });
   }
+}
 
 // ── DISTRICT VIEW ─────────────────────────────────────────────────────────────
 
