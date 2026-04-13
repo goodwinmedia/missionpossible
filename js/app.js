@@ -237,7 +237,12 @@ async function loginUser(user, remember = true) {
 function setupRealtime() {
   db.subscribeToEntries(async () => {
     state.allEntries = await db.getAllEntries();
+    if (state.user) {
+      state.myEntries = await db.getEntriesForUser(state.user.id);
+    }
     if (state.currentView === 'leaderboard') renderLeaderboard();
+    if (state.currentView === 'home') renderHome();
+    if (state.currentView === 'profile') renderProfile();
     updateHeader();
   });
 }
@@ -684,7 +689,8 @@ function renderExtraCreditHome() {
   const ecEarnedPts = ecEarned.reduce((s, h) => s + h.points, 0);
 
   const btTodayPts = allBonusTasks().reduce((s, h) => {
-    return s + state.myEntries.filter(e => e.habit_id === h.id).length * h.points;
+    const doneToday = state.myEntries.some(e => e.habit_id === h.id && e.date === today);
+    return s + (doneToday ? h.points : 0);
   }, 0);
 
   // Helper: render a single special-habit row
@@ -963,7 +969,7 @@ function renderLogHabits() {
 function updateLogPointsPreview() {
   const pts = Object.entries(state.logSelections)
     .filter(([, sel]) => sel)
-    .reduce((sum, [id]) => sum + (getHabitById(id)?.points || 0), 0);
+    .reduce((sum, [id]) => sum + (findHabit(id)?.points || 0), 0);
   document.getElementById('log-pts-count').textContent = `${pts} pts selected`;
 }
 
