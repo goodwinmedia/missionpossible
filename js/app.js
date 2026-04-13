@@ -78,7 +78,10 @@ const state = {
   user: null,
   allUsers: [],
   myEntries: [],
+  /** Full rows — only loaded in Admin (and export). Leaderboards use `entryTotals`. */
   allEntries: [],
+  /** user_id -> sum(points); from DB RPC `entry_totals_by_user` */
+  entryTotals: {},
   currentView: 'home',
   logDate: todayISO(),
   logSelections: {},
@@ -219,10 +222,11 @@ async function loginUser(user, remember = true) {
     sessionStorage.setItem('mp_user', JSON.stringify(saved));
     localStorage.removeItem('mp_user');
   }
-  [state.myEntries, state.allEntries] = await Promise.all([
+  [state.myEntries, state.entryTotals] = await Promise.all([
     db.getEntriesForUser(user.id),
-    db.getAllEntries(),
+    db.getEntryTotalsByUser(),
   ]);
+  state.allEntries = [];
   document.getElementById('loading-screen').classList.add('hidden');
   document.getElementById('onboarding').classList.add('hidden');
   document.getElementById('main-app').classList.remove('hidden');
@@ -236,13 +240,22 @@ async function loginUser(user, remember = true) {
 
 function setupRealtime() {
   db.subscribeToEntries(async () => {
-    state.allEntries = await db.getAllEntries();
-    if (state.user) {
-      state.myEntries = await db.getEntriesForUser(state.user.id);
+    try {
+      if (state.user) {
+        [state.myEntries, state.entryTotals] = await Promise.all([
+          db.getEntriesForUser(state.user.id),
+          db.getEntryTotalsByUser(),
+        ]);
+      } else {
+        state.entryTotals = await db.getEntryTotalsByUser();
+      }
+    } catch (err) {
+      console.error('realtime entries refresh failed:', err);
     }
     if (state.currentView === 'leaderboard') renderLeaderboard();
     if (state.currentView === 'home') renderHome();
     if (state.currentView === 'profile') renderProfile();
+    if (state.currentView === 'district') renderDistrict();
     updateHeader();
   });
 }
@@ -819,9 +832,10 @@ async function toggleSpecialHabit(habitId) {
     } else {
       await db.addEntry({ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date: today });
     }
-    // Refresh state silently — no re-render needed (optimistic already correct)
-    state.myEntries = await db.getEntriesForUser(state.user.id);
-    state.allEntries = await db.getAllEntries();
+    [state.myEntries, state.entryTotals] = await Promise.all([
+      db.getEntriesForUser(state.user.id),
+      db.getEntryTotalsByUser(),
+    ]);
     updateHeader();
   } catch (err) {
     console.error('toggleSpecialHabit error:', err);
@@ -853,8 +867,10 @@ async function toggleHabit(habitId, date) {
     } else {
       await db.addEntry({ user_id: state.user.id, habit_id: habitId, category: habit.category, points: habit.points, type: habit.type, date });
     }
-    state.myEntries = await db.getEntriesForUser(state.user.id);
-    state.allEntries = await db.getAllEntries();
+    [state.myEntries, state.entryTotals] = await Promise.all([
+      db.getEntriesForUser(state.user.id),
+      db.getEntryTotalsByUser(),
+    ]);
     updateHeader();
   } catch (_) {
     // Revert
@@ -1019,9 +1035,9 @@ async function submitLog() {
     if (toAdd.length)       await db.batchUpsertEntries(toAdd);
     if (toDeleteIds.length) await db.deleteEntriesByIds(toDeleteIds);
 
-    [state.myEntries, state.allEntries] = await Promise.all([
+    [state.myEntries, state.entryTotals] = await Promise.all([
       db.getEntriesForUser(state.user.id),
-      db.getAllEntries(),
+      db.getEntryTotalsByUser(),
     ]);
     state.logSelectionsDate = null;
     updateHeader();
@@ -1068,17 +1084,12 @@ function renderLeaderboard() {
 }
 
 function aggregateData() {
-  const userPoints = {};
-  state.allEntries.forEach(e => {
-    userPoints[e.user_id] = (userPoints[e.user_id] || 0) + e.points;
-  });
-
   const people = state.allUsers
     .filter(u => state.zoneActive[u.zone_id] !== false)
     .map(u => ({
       ...u,
       zone: ZONES.find(z => z.id === u.zone_id),
-      points: userPoints[u.id] || 0,
+      points: state.entryTotals[u.id] || 0,
       isMe: u.id === state.user?.id,
     }))
     .sort((a, b) => b.points - a.points);
@@ -1098,11 +1109,6 @@ function tiedRanks(items, getPoints) {
 }
 
 function renderDistrictLeaderboard() {
-  const userPoints = {};
-  state.allEntries.forEach(e => {
-    userPoints[e.user_id] = (userPoints[e.user_id] || 0) + e.points;
-  });
-
   const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
 
   // Named districts from user data
@@ -1112,7 +1118,7 @@ function renderDistrictLeaderboard() {
 
   const groups = districtNames.map(name => {
     const members = state.allUsers.filter(u => u.district === name);
-    const points  = members.reduce((s, u) => s + (userPoints[u.id] || 0), 0);
+    const points  = members.reduce((s, u) => s + (state.entryTotals[u.id] || 0), 0);
     const hasMe   = members.some(u => u.id === state.user?.id);
     const dl      = members.find(m => m.district_role === 'leader');
     const stl     = members.find(m => m.district_role === 'stl');
@@ -1122,7 +1128,7 @@ function renderDistrictLeaderboard() {
   // Virtual "Adult Leaders" group — anyone in zone 7
   const adultMembers = state.allUsers.filter(u => u.zone_id === 7);
   if (adultMembers.length) {
-    const points = adultMembers.reduce((s, u) => s + (userPoints[u.id] || 0), 0);
+    const points = adultMembers.reduce((s, u) => s + (state.entryTotals[u.id] || 0), 0);
     const hasMe  = adultMembers.some(u => u.id === state.user?.id);
     groups.push({ name: 'Adult Leaders', members: adultMembers, points, hasMe, dl: null, stl: null, isAdult: true });
   }
@@ -1212,14 +1218,9 @@ function renderDistrict() {
   const container = document.getElementById('district-view-content');
   if (!container || !state.user.district) return;
 
-  const userPtsMap = {};
-  state.allEntries.forEach(e => {
-    userPtsMap[e.user_id] = (userPtsMap[e.user_id] || 0) + e.points;
-  });
-
   const members = state.allUsers
     .filter(u => u.district === state.user.district)
-    .map(u => ({ ...u, pts: userPtsMap[u.id] || 0 }))
+    .map(u => ({ ...u, pts: state.entryTotals[u.id] || 0 }))
     .sort((a, b) => b.pts - a.pts);
 
   const zone  = ZONES.find(z => z.id === state.user.zone_id);
@@ -1268,9 +1269,9 @@ function renderProfile() {
   const streak   = calcStreak(state.myEntries);
   const total    = calcTotalPoints(state.myEntries);
   const catPts   = calcCategoryPoints(state.myEntries);
-  const userPts  = {};
-  state.allEntries.forEach(e => { userPts[e.user_id] = (userPts[e.user_id] || 0) + e.points; });
-  const rank = Object.entries(userPts).sort((a, b) => b[1] - a[1]).findIndex(([id]) => id === state.user.id) + 1;
+  const rank = Object.entries(state.entryTotals)
+    .sort((a, b) => b[1] - a[1])
+    .findIndex(([id]) => id === state.user.id) + 1;
 
   const avatar = document.getElementById('profile-avatar');
   avatar.textContent = getInitials(state.user.name);

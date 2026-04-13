@@ -79,19 +79,67 @@ export async function adminDeleteUser(userId) {
 }
 
 // ── ENTRIES ──────────────────────────────────────────────────────────────────
+// PostgREST/Supabase returns at most ~1000 rows per request by default. Leaderboard
+// totals sum all rows — without paging, only the newest 1000 entries globally are
+// loaded, so users' scores on the board can be far below their profile total.
+
+const ENTRIES_PAGE_SIZE = 1000;
 
 export async function getEntriesForUser(userId) {
-  const { data, error } = await getClient()
-    .from('entries').select('*').eq('user_id', userId).order('date', { ascending: false });
-  if (error) throw error;
-  return data;
+  const client = getClient();
+  const all = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await client
+      .from('entries')
+      .select('*')
+      .eq('user_id', userId)
+      .order('date', { ascending: false })
+      .range(from, from + ENTRIES_PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data?.length) break;
+    all.push(...data);
+    if (data.length < ENTRIES_PAGE_SIZE) break;
+    from += ENTRIES_PAGE_SIZE;
+  }
+  return all;
 }
 
 export async function getAllEntries() {
-  const { data, error } = await getClient()
-    .from('entries').select('*, users!inner(name, zone_id)').order('date', { ascending: false });
-  if (error) throw error;
-  return data;
+  const client = getClient();
+  const all = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await client
+      .from('entries')
+      .select('*, users!inner(name, zone_id)')
+      .order('date', { ascending: false })
+      .range(from, from + ENTRIES_PAGE_SIZE - 1);
+    if (error) throw error;
+    if (!data?.length) break;
+    all.push(...data);
+    if (data.length < ENTRIES_PAGE_SIZE) break;
+    from += ENTRIES_PAGE_SIZE;
+  }
+  return all;
+}
+
+/** One row per user server-side. If the RPC is missing, falls back to summing all entry rows. */
+export async function getEntryTotalsByUser() {
+  const { data, error } = await getClient().rpc('entry_totals_by_user');
+  if (!error && Array.isArray(data)) {
+    const map = {};
+    for (const row of data) {
+      map[row.user_id] = Number(row.total_points) || 0;
+    }
+    return map;
+  }
+  const entries = await getAllEntries();
+  const map = {};
+  for (const e of entries) {
+    map[e.user_id] = (map[e.user_id] || 0) + e.points;
+  }
+  return map;
 }
 
 export async function addEntry(entry) {

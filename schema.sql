@@ -136,6 +136,23 @@ create table if not exists public.entries (
 create index if not exists entries_user_id_idx on public.entries (user_id);
 create index if not exists entries_date_idx    on public.entries (date);
 
+-- Aggregated points per user (one row per user who has entries). Read-only: does
+-- not insert, update, or delete any rows in `entries` (or any other table).
+-- Used by the app for leaderboards without downloading every entry row.
+create or replace function public.entry_totals_by_user()
+returns table (user_id uuid, total_points bigint)
+language sql
+stable
+security invoker
+set search_path = public
+as $$
+  select e.user_id, sum(e.points)::bigint as total_points
+  from public.entries e
+  group by e.user_id;
+$$;
+
+grant execute on function public.entry_totals_by_user() to anon, authenticated, service_role;
+
 -- ── ROW LEVEL SECURITY ────────────────────────────────────
 
 alter table public.zones   enable row level security;
