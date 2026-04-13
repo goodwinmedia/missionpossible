@@ -132,6 +132,14 @@ export function getZoneById(id) {
   return ZONES.find(z => z.id === id);
 }
 
+/** Local calendar date as YYYY-MM-DD (not UTC — avoids "today" showing as yesterday). */
+export function toLocalISODate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export function getWeekNumber(dateStr, startStr) {
   const d = new Date(dateStr + 'T12:00:00');
   const s = new Date(startStr + 'T12:00:00');
@@ -145,5 +153,5 @@ export function getWeekStart(dateStr) {
   const day = d.getDay();
   const offset = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + offset);
-  return d.toISOString().split('T')[0];
+  return toLocalISODate(d);
 }

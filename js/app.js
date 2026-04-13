@@ -2,25 +2,25 @@ import { PROGRAM_START, ADMIN_CODE } from './config.js';
 import {
   ZONES, MISSIONS, CATEGORIES, DAILY_HABITS, WEEKLY_CHALLENGES, BONUS_CHALLENGES,
   EXTRA_CREDIT, BONUS_TASKS, ALL_HABITS,
-  getHabitById, getZoneById, getWeekNumber, getWeekStart,
+  getHabitById, getZoneById, getWeekNumber, getWeekStart, toLocalISODate,
 } from './data.js';
 import * as db from './db.js';
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
 function todayISO() {
-  return new Date().toISOString().split('T')[0];
+  return toLocalISODate(new Date());
 }
 
 function prevDay(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
   d.setDate(d.getDate() - 1);
-  return d.toISOString().split('T')[0];
+  return toLocalISODate(d);
 }
 
 function nextDay(dateStr) {
   const d = new Date(dateStr + 'T12:00:00');
   d.setDate(d.getDate() + 1);
-  return d.toISOString().split('T')[0];
+  return toLocalISODate(d);
 }
 
 function formatDisplayDate(dateStr) {
