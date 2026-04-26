@@ -10,5 +10,12 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const PROGRAM_START = '2026-03-24'; // Update if your program starts a different week
 
+// Scoring window — only entries with a date inside this inclusive range
+// count toward total points, category points, and leaderboards. Entries
+// outside the window are ignored in all score calculations (this prevents
+// users from back-dating completions to inflate their score).
+export const SCORING_WINDOW_START = '2026-04-04';
+export const SCORING_WINDOW_END   = '2026-05-06';
+
 // Admin passcode — change this before deploying!
 export const ADMIN_CODE = 'mission42';

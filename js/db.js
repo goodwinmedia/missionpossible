@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, SCORING_WINDOW_START, SCORING_WINDOW_END } from './config.js';
 
 let _client = null;
 
@@ -124,9 +124,15 @@ export async function getAllEntries() {
   return all;
 }
 
-/** One row per user server-side. If the RPC is missing, falls back to summing all entry rows. */
+/** One row per user server-side. Sums only entries inside the scoring window
+ *  so back-dated completions outside the window don't inflate the leaderboard.
+ *  If the RPC is missing, falls back to summing entry rows client-side with
+ *  the same date filter. */
 export async function getEntryTotalsByUser() {
-  const { data, error } = await getClient().rpc('entry_totals_by_user');
+  const { data, error } = await getClient().rpc('entry_totals_by_user', {
+    p_start: SCORING_WINDOW_START,
+    p_end:   SCORING_WINDOW_END,
+  });
   if (!error && Array.isArray(data)) {
     const map = {};
     for (const row of data) {
@@ -137,6 +143,7 @@ export async function getEntryTotalsByUser() {
   const entries = await getAllEntries();
   const map = {};
   for (const e of entries) {
+    if (e.date < SCORING_WINDOW_START || e.date > SCORING_WINDOW_END) continue;
     map[e.user_id] = (map[e.user_id] || 0) + e.points;
   }
   return map;

@@ -1,4 +1,4 @@
-import { PROGRAM_START, ADMIN_CODE } from './config.js';
+import { PROGRAM_START, ADMIN_CODE, SCORING_WINDOW_START, SCORING_WINDOW_END } from './config.js';
 import {
   ZONES, MISSIONS, CATEGORIES, DAILY_HABITS, WEEKLY_CHALLENGES, BONUS_CHALLENGES,
   EXTRA_CREDIT, BONUS_TASKS, ALL_HABITS,
@@ -60,14 +60,26 @@ function calcStreak(entries) {
   return streak;
 }
 
+// Only entries dated inside the scoring window count toward any score.
+// Back-dated completions outside [SCORING_WINDOW_START, SCORING_WINDOW_END]
+// are stripped here so they cannot affect personal totals or leaderboards.
+function inScoringWindow(dateStr) {
+  return dateStr >= SCORING_WINDOW_START && dateStr <= SCORING_WINDOW_END;
+}
+
+function scoringEntries(entries) {
+  return entries.filter(e => inScoringWindow(e.date));
+}
+
 function calcTotalPoints(entries) {
-  return entries.reduce((sum, e) => sum + (e.points || 0), 0);
+  return scoringEntries(entries).reduce((sum, e) => sum + (e.points || 0), 0);
 }
 
 function calcCategoryPoints(entries) {
+  const scored = scoringEntries(entries);
   const result = {};
   for (const cat of Object.keys(CATEGORIES)) {
-    result[cat] = entries.filter(e => e.category === cat).reduce((s, e) => s + e.points, 0);
+    result[cat] = scored.filter(e => e.category === cat).reduce((s, e) => s + e.points, 0);
   }
   return result;
 }
@@ -480,7 +492,7 @@ function renderRings(completedIds, date) {
     const pct     = total ? done / total : 0;
     const dash    = (pct * circ).toFixed(2);
     const totalPts = state.myEntries
-      .filter(e => e.category === key)
+      .filter(e => e.category === key && inScoringWindow(e.date))
       .reduce((s, e) => s + e.points, 0);
     const active  = state.homeFilter === key;
 
@@ -697,7 +709,9 @@ function renderExtraCreditHome() {
     return;
   }
 
-  const ecEarned    = allExtraCredit().filter(h => state.myEntries.some(e => e.habit_id === h.id));
+  const ecEarned    = allExtraCredit().filter(h =>
+    state.myEntries.some(e => e.habit_id === h.id && inScoringWindow(e.date))
+  );
   const ecTotalPts  = allExtraCredit().reduce((s, h) => s + h.points, 0);
   const ecEarnedPts = ecEarned.reduce((s, h) => s + h.points, 0);
 
@@ -1160,7 +1174,9 @@ function renderPeopleLeaderboard() {
   const { people } = aggregateData();
   const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
   const ranks = tiedRanks(people, p => p.points);
-  const revealed = state.lbRevealed;
+  // Adult Leaders (zone 7) always see the unblurred ranking.
+  const isAdultLeader = state.user?.zone_id === 7;
+  const revealed = state.lbRevealed || isAdultLeader;
 
   document.getElementById('lb-people').innerHTML = people.map((p, i) => {
     const r = ranks[i];
@@ -1445,7 +1461,10 @@ async function renderAdmin() {
     zones.forEach(z => { state.zoneActive[z.id] = z.active !== false; });
 
     const userPts = {};
-    entries.forEach(e => { userPts[e.user_id] = (userPts[e.user_id] || 0) + e.points; });
+    entries.forEach(e => {
+      if (!inScoringWindow(e.date)) return;
+      userPts[e.user_id] = (userPts[e.user_id] || 0) + e.points;
+    });
 
     container.innerHTML = `
       <div class="admin-section">

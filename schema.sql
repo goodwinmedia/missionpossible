@@ -139,7 +139,17 @@ create index if not exists entries_date_idx    on public.entries (date);
 -- Aggregated points per user (one row per user who has entries). Read-only: does
 -- not insert, update, or delete any rows in `entries` (or any other table).
 -- Used by the app for leaderboards without downloading every entry row.
-create or replace function public.entry_totals_by_user()
+--
+-- Only entries with `date` inside [p_start, p_end] are counted. The defaults
+-- match the program's official scoring window so back-dated completions
+-- outside the window cannot inflate the leaderboard, even if a stale client
+-- calls this without arguments.
+drop function if exists public.entry_totals_by_user();
+drop function if exists public.entry_totals_by_user(date, date);
+create or replace function public.entry_totals_by_user(
+  p_start date default '2026-04-04',
+  p_end   date default '2026-05-06'
+)
 returns table (user_id uuid, total_points bigint)
 language sql
 stable
@@ -148,10 +158,11 @@ set search_path = public
 as $$
   select e.user_id, sum(e.points)::bigint as total_points
   from public.entries e
+  where e.date >= p_start and e.date <= p_end
   group by e.user_id;
 $$;
 
-grant execute on function public.entry_totals_by_user() to anon, authenticated, service_role;
+grant execute on function public.entry_totals_by_user(date, date) to anon, authenticated, service_role;
 
 -- ── ROW LEVEL SECURITY ────────────────────────────────────
 
