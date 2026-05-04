@@ -1077,8 +1077,9 @@ async function submitLog() {
 // ── LEADERBOARD VIEW ──────────────────────────────────────────────────────────
 
 function renderLeaderboard() {
-  const peopleEl    = document.getElementById('lb-people');
-  const districtsEl = document.getElementById('lb-districts');
+  const peopleEl     = document.getElementById('lb-people');
+  const companionsEl = document.getElementById('lb-companions');
+  const districtsEl  = document.getElementById('lb-districts');
 
   // View tabs
   document.querySelectorAll('#lb-view-tabs .lb-tab').forEach(btn => {
@@ -1086,15 +1087,13 @@ function renderLeaderboard() {
     btn.onclick = () => { state.lbView = btn.dataset.lbview; renderLeaderboard(); };
   });
 
-  if (state.lbView === 'people') {
-    peopleEl.style.display    = '';
-    districtsEl.style.display = 'none';
-    renderPeopleLeaderboard();
-  } else {
-    peopleEl.style.display    = 'none';
-    districtsEl.style.display = '';
-    renderDistrictLeaderboard();
-  }
+  peopleEl.style.display     = state.lbView === 'people'     ? '' : 'none';
+  companionsEl.style.display = state.lbView === 'companions' ? '' : 'none';
+  districtsEl.style.display  = state.lbView === 'districts'  ? '' : 'none';
+
+  if (state.lbView === 'people')     renderPeopleLeaderboard();
+  if (state.lbView === 'companions') renderCompanionLeaderboard();
+  if (state.lbView === 'districts')  renderDistrictLeaderboard();
 }
 
 function aggregateData() {
@@ -1167,6 +1166,86 @@ function renderDistrictLeaderboard() {
       </div>
       <div class="lb-person-pts">${d.points}<span>pts</span></div>
     </div>`;
+  }).join('');
+}
+
+// Group users into companionships by shared mission. Users without a mission
+// (or whose zone is hidden) are skipped. Most companionships are pairs, but
+// a 3-person trio is supported (e.g. Japan Sendai).
+function buildCompanionships() {
+  const eligible = state.allUsers.filter(u =>
+    u.mission && state.zoneActive[u.zone_id] !== false
+  );
+  const byMission = new Map();
+  for (const u of eligible) {
+    const key = u.mission;
+    if (!byMission.has(key)) byMission.set(key, []);
+    byMission.get(key).push(u);
+  }
+  const groups = [];
+  for (const [mission, members] of byMission) {
+    const ranked = members
+      .map(u => ({ ...u, pts: state.entryTotals[u.id] || 0 }))
+      .sort((a, b) => b.pts - a.pts);
+    const total = ranked.reduce((s, m) => s + m.pts, 0);
+    groups.push({
+      mission,
+      flag: mission.split(' ')[0],
+      label: mission.split(' ').slice(1).join(' '),
+      members: ranked,
+      total,
+      hasMe: ranked.some(m => m.id === state.user?.id),
+      district: ranked[0]?.district || '',
+    });
+  }
+  groups.sort((a, b) => b.total - a.total);
+  return groups;
+}
+
+function renderCompanionLeaderboard() {
+  const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
+  const groups = buildCompanionships();
+  const ranks = tiedRanks(groups, g => g.total);
+  const isAdultLeader = state.user?.zone_id === 7;
+  const revealed = state.lbRevealed || isAdultLeader;
+
+  document.getElementById('lb-companions').innerHTML = groups.map((g, i) => {
+    const r = ranks[i];
+    const medal = r <= 3 ? `style="color:${medalColors[r - 1]}"` : '';
+    const maxPts = Math.max(1, ...g.members.map(m => m.pts));
+
+    const memberRows = g.members.map(m => {
+      const mZone = ZONES.find(z => z.id === m.zone_id);
+      const initials = getInitials(m.name);
+      const isSelf = m.id === state.user?.id;
+      const pct = Math.round((m.pts / maxPts) * 100);
+      const showName = isSelf || revealed;
+      return `
+        <div class="comp-member ${isSelf ? 'self' : ''}">
+          <div class="comp-mem-avatar" style="background:${mZone?.color || '#6b7280'}">${initials}</div>
+          <div class="comp-mem-info">
+            <div class="comp-mem-name ${showName ? '' : 'lb-name-blur'}">${m.name}${isSelf ? ' <span class="you-tag">you</span>' : ''}</div>
+            <div class="comp-mem-bar"><div class="comp-mem-bar-fill" style="width:${pct}%;background:${mZone?.color || '#6b7280'}"></div></div>
+          </div>
+          <div class="comp-mem-pts">${m.pts}<span>pts</span></div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="lb-person-row comp-row ${g.hasMe ? 'is-me' : ''}">
+        <div class="comp-row-head">
+          <span class="lb-medal" ${medal}>${r}</span>
+          <div class="comp-flag">${g.flag}</div>
+          <div class="comp-info">
+            <div class="comp-name">${g.label}${g.hasMe ? ' <span class="you-tag">you</span>' : ''}</div>
+            <div class="comp-meta">${g.district || ''} · ${g.members.length}-comp</div>
+          </div>
+          <div class="comp-total">${g.total}<span>pts</span></div>
+        </div>
+        <div class="comp-members">
+          ${memberRows}
+        </div>
+      </div>`;
   }).join('');
 }
 
