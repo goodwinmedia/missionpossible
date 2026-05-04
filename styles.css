@@ -806,7 +806,90 @@ button { cursor: pointer; font-family: var(--fbody); }
 .lb-person-pts { font-family: var(--fhead); font-size: 1rem; font-weight: 800; flex-shrink: 0; }
 .lb-person-pts span { font-size: .65rem; font-weight: 500; color: var(--dim); margin-left: .1rem; }
 
-/* ── CHALLENGE OVER ──────────────────────────────────────── */
+/* ── CHALLENGE OVER — FULL SCREEN TAKEOVER ───────────────── */
+.challenge-over-screen {
+  position: fixed; inset: 0;
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(124,58,237,.25), transparent 55%),
+    radial-gradient(circle at 50% 80%, rgba(236,72,153,.18), transparent 60%),
+    var(--bg);
+  text-align: center;
+  animation: cos-fade-in .9s ease-out both;
+}
+@keyframes cos-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.cos-inner {
+  max-width: 440px;
+  width: 100%;
+}
+.cos-emoji {
+  font-size: 4.5rem;
+  margin-bottom: 1rem;
+  animation: cos-float 3.5s ease-in-out infinite;
+}
+@keyframes cos-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+.cos-title {
+  font-family: var(--fhead);
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 1.1rem;
+  line-height: 1.05;
+}
+.cos-thanks {
+  font-family: var(--fbody, 'Inter', sans-serif);
+  font-size: 1.05rem;
+  color: #e5e7eb;
+  line-height: 1.55;
+  margin-bottom: 1.5rem;
+}
+.cos-thanks strong {
+  font-family: var(--fhead);
+  font-weight: 700;
+}
+.cos-divider {
+  width: 56px;
+  height: 2px;
+  margin: 0 auto 1.5rem;
+  background: var(--grad);
+  border-radius: 2px;
+  opacity: .7;
+}
+.cos-quote {
+  font-style: italic;
+  font-size: .95rem;
+  color: var(--dim);
+  line-height: 1.55;
+  margin-bottom: 2rem;
+}
+.cos-quote span {
+  display: inline-block;
+  margin-top: .35rem;
+  font-style: normal;
+  font-size: .78rem;
+  letter-spacing: .04em;
+  color: #6b7280;
+}
+.cos-footer {
+  font-family: var(--fhead);
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--dim);
+  letter-spacing: .03em;
+}
+
 .challenge-over-banner {
   display: flex; align-items: center; gap: .85rem;
   background: linear-gradient(135deg, rgba(124,58,237,.18), rgba(236,72,153,.14));

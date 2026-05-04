@@ -172,6 +172,10 @@ function saveTheme(prefs) {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 async function init() {
+  if (CHALLENGE_LOCKED) {
+    showChallengeOverScreen();
+    return;
+  }
   // Apply saved theme immediately so colors are right from first render
   applyTheme(loadTheme());
   try {
@@ -208,6 +212,36 @@ async function init() {
       console.error(err);
       if (!state.user) await loadOnboarding();
     }
+  }
+}
+
+// Full-screen takeover when CHALLENGE_LOCKED is true. Hides every other
+// part of the app and shows a single celebratory thank-you screen. No
+// network calls are made, no user data is loaded.
+function showChallengeOverScreen() {
+  const ids = ['loading-screen', 'onboarding', 'main-app', 'app-header', 'bottom-nav', 'view-container'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+
+  let screen = document.getElementById('challenge-over-screen');
+  if (!screen) {
+    screen = document.createElement('div');
+    screen.id = 'challenge-over-screen';
+    screen.className = 'challenge-over-screen';
+    screen.innerHTML = `
+      <div class="cos-inner">
+        <div class="cos-emoji">🏁</div>
+        <h1 class="cos-title">Challenge Complete</h1>
+        <p class="cos-thanks">Thank you for participating in<br><strong>Mission Possible — Battle of the Zones</strong>.</p>
+        <div class="cos-divider"></div>
+        <p class="cos-quote">"Many are called, but few are chosen."<br><span>— D&amp;C 121:34</span></p>
+        <p class="cos-footer">See you next year, maybe. 🌍</p>
+      </div>`;
+    document.getElementById('app')?.appendChild(screen);
+  } else {
+    screen.classList.remove('hidden');
   }
 }
 
