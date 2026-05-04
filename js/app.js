@@ -79,6 +79,15 @@ function blockedByLock() {
   return true;
 }
 
+// Future-date guard: back-dating is allowed (catch-up logging), but logging
+// for a date that hasn't happened yet is not. Returns true (and toasts) if
+// the date is in the future and the mutation should be aborted.
+function blockedByFutureDate(dateStr) {
+  if (dateStr <= todayISO()) return false;
+  showToast('⏳ Can\'t log future dates — try today or earlier', 'error');
+  return true;
+}
+
 function calcTotalPoints(entries) {
   return scoringEntries(entries).reduce((sum, e) => sum + (e.points || 0), 0);
 }
@@ -891,6 +900,7 @@ async function toggleSpecialHabit(habitId) {
 
 async function toggleHabit(habitId, date) {
   if (blockedByLock()) return;
+  if (blockedByFutureDate(date)) return;
   const habit = getHabitById(habitId);
   const wasCompleted = state.myEntries.some(e => e.habit_id === habitId && e.date === date);
 
@@ -931,6 +941,11 @@ function renderLog() {
     renderLogClosedState();
     return;
   }
+  // Restore log layout if it was hidden by a previous closed-state render
+  document.querySelector('.log-heading')?.style.removeProperty('display');
+  document.querySelector('.date-selector')?.style.removeProperty('display');
+  document.querySelector('.log-submit-wrap')?.style.removeProperty('display');
+
   if (state.logDate > todayISO()) state.logDate = todayISO();
   updateLogDateDisplay();
   renderLogHabits();
@@ -1057,6 +1072,7 @@ function updateLogPointsPreview() {
 
 async function submitLog() {
   if (blockedByLock()) return;
+  if (blockedByFutureDate(state.logDate)) return;
   const date     = state.logDate;
   const week     = getWeekNumber(date, PROGRAM_START);
   const weekStart = getWeekStart(date);

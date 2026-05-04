@@ -21,7 +21,7 @@ export const SCORING_WINDOW_END   = '2026-05-03';
 // new entries from the client. Final scores are locked. Set back to false
 // to re-open logging. (The server-side RLS policy drop in schema.sql is
 // the authoritative backstop — see the "CHALLENGE LOCK" section.)
-export const CHALLENGE_LOCKED = true;
+export const CHALLENGE_LOCKED = false;
 
 // Admin passcode — change this before deploying!
 export const ADMIN_CODE = 'mission42';
