@@ -224,3 +224,21 @@ do $$ begin
     drop policy "anon_delete_entries" on public.entries;
   end if;
 end $$;
+
+-- ── ALLOW BACK-DATING, BLOCK FUTURE DATES ─────────────────
+-- Re-opens entry creation/deletion for the anon role, but the insert
+-- policy's WITH CHECK clause makes it impossible to create entries
+-- whose `date` is in the future (anywhere on Earth, hence +1 day buffer).
+-- To re-lock the challenge entirely, run the CHALLENGE LOCK block above.
+do $$ begin
+  if exists (select 1 from pg_policies where policyname = 'anon_insert_entries' and tablename = 'entries') then
+    drop policy "anon_insert_entries" on public.entries;
+  end if;
+  if exists (select 1 from pg_policies where policyname = 'anon_delete_entries' and tablename = 'entries') then
+    drop policy "anon_delete_entries" on public.entries;
+  end if;
+  create policy "anon_insert_entries" on public.entries
+    for insert with check (date <= (current_date + interval '1 day'));
+  create policy "anon_delete_entries" on public.entries
+    for delete using (true);
+end $$;
