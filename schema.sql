@@ -147,8 +147,8 @@ create index if not exists entries_date_idx    on public.entries (date);
 drop function if exists public.entry_totals_by_user();
 drop function if exists public.entry_totals_by_user(date, date);
 create or replace function public.entry_totals_by_user(
-  p_start date default '2026-04-04',
-  p_end   date default '2026-05-06'
+  p_start date default '2026-04-05',
+  p_end   date default '2026-05-03'
 )
 returns table (user_id uuid, total_points bigint)
 language sql
