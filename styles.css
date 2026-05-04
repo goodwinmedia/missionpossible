@@ -806,6 +806,45 @@ button { cursor: pointer; font-family: var(--fbody); }
 .lb-person-pts { font-family: var(--fhead); font-size: 1rem; font-weight: 800; flex-shrink: 0; }
 .lb-person-pts span { font-size: .65rem; font-weight: 500; color: var(--dim); margin-left: .1rem; }
 
+/* ── CHALLENGE OVER ──────────────────────────────────────── */
+.challenge-over-banner {
+  display: flex; align-items: center; gap: .85rem;
+  background: linear-gradient(135deg, rgba(124,58,237,.18), rgba(236,72,153,.14));
+  border: 1px solid rgba(167,139,250,.45);
+  border-radius: var(--r);
+  padding: .85rem 1rem;
+  margin: 0 0 1rem;
+}
+.cob-icon { font-size: 1.6rem; flex-shrink: 0; }
+.cob-text { flex: 1; min-width: 0; }
+.cob-title {
+  font-family: var(--fhead);
+  font-size: 1rem; font-weight: 800;
+  letter-spacing: .01em;
+}
+.cob-sub {
+  font-size: .78rem; font-weight: 500;
+  color: var(--dim);
+  margin-top: .15rem;
+}
+
+.log-closed {
+  text-align: center;
+  padding: 3.5rem 1rem 2rem;
+}
+.log-closed-emoji { font-size: 3.5rem; margin-bottom: .75rem; }
+.log-closed-title {
+  font-family: var(--fhead);
+  font-size: 1.6rem; font-weight: 800;
+  margin-bottom: .65rem;
+}
+.log-closed-sub {
+  color: var(--dim);
+  font-size: .9rem; line-height: 1.45;
+  margin-bottom: 1.5rem;
+}
+.log-closed-cta { max-width: 280px; margin: 0 auto; }
+
 /* ── COMPANIONSHIPS ──────────────────────────────────────── */
 .comp-row {
   display: block;

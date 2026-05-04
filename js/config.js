@@ -17,5 +17,11 @@ export const PROGRAM_START = '2026-03-24'; // Update if your program starts a di
 export const SCORING_WINDOW_START = '2026-04-05';
 export const SCORING_WINDOW_END   = '2026-05-03';
 
+// When true, the challenge is over: users cannot add, toggle, or save any
+// new entries from the client. Final scores are locked. Set back to false
+// to re-open logging. (The server-side RLS policy drop in schema.sql is
+// the authoritative backstop — see the "CHALLENGE LOCK" section.)
+export const CHALLENGE_LOCKED = true;
+
 // Admin passcode — change this before deploying!
 export const ADMIN_CODE = 'mission42';

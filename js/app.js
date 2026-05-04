@@ -1,4 +1,4 @@
-import { PROGRAM_START, ADMIN_CODE, SCORING_WINDOW_START, SCORING_WINDOW_END } from './config.js';
+import { PROGRAM_START, ADMIN_CODE, SCORING_WINDOW_START, SCORING_WINDOW_END, CHALLENGE_LOCKED } from './config.js';
 import {
   ZONES, MISSIONS, CATEGORIES, DAILY_HABITS, WEEKLY_CHALLENGES, BONUS_CHALLENGES,
   EXTRA_CREDIT, BONUS_TASKS, ALL_HABITS,
@@ -69,6 +69,14 @@ function inScoringWindow(dateStr) {
 
 function scoringEntries(entries) {
   return entries.filter(e => inScoringWindow(e.date));
+}
+
+// Returns true (and shows a toast) if the challenge is locked. Use to
+// short-circuit any mutation path that would create or remove entries.
+function blockedByLock() {
+  if (!CHALLENGE_LOCKED) return false;
+  showToast('🏁 Challenge is over — final scores are locked', 'info');
+  return true;
 }
 
 function calcTotalPoints(entries) {
@@ -466,14 +474,36 @@ function renderHome() {
   const week = getWeekNumber(today, PROGRAM_START);
   const firstName = state.user.name.split(' ')[0];
 
-  document.getElementById('greeting-text').textContent = `${greeting()}, ${firstName}!`;
-  document.getElementById('today-date-label').textContent =
-    new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  document.getElementById('greeting-text').textContent = CHALLENGE_LOCKED
+    ? `Mission Complete, ${firstName} 🏁`
+    : `${greeting()}, ${firstName}!`;
+  document.getElementById('today-date-label').textContent = CHALLENGE_LOCKED
+    ? 'Final scores are locked. Check the leaderboard for results.'
+    : new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
+  renderChallengeOverBanner();
   renderRings(completedIds, today);
   renderChallengeStrip(completedIds, week);
   renderHomeHabits(completedIds, today);
   renderExtraCreditHome();
+}
+
+function renderChallengeOverBanner() {
+  const scroll = document.querySelector('#view-home .view-scroll');
+  if (!scroll) return;
+  let banner = document.getElementById('challenge-over-banner');
+  if (!CHALLENGE_LOCKED) { if (banner) banner.remove(); return; }
+  if (banner) return;
+  banner = document.createElement('div');
+  banner.id = 'challenge-over-banner';
+  banner.className = 'challenge-over-banner';
+  banner.innerHTML = `
+    <div class="cob-icon">🏁</div>
+    <div class="cob-text">
+      <div class="cob-title">Challenge Over</div>
+      <div class="cob-sub">Logging is closed. Tap <b>Ranks</b> to see final standings.</div>
+    </div>`;
+  scroll.insertBefore(banner, scroll.firstChild?.nextSibling || null);
 }
 
 function renderRings(completedIds, date) {
@@ -814,6 +844,7 @@ function renderExtraCreditHome() {
 
 // Toggle extra-credit (one-time) or bonus-task (repeatable) directly from home view
 async function toggleSpecialHabit(habitId) {
+  if (blockedByLock()) return;
   const habit = findHabit(habitId);
   if (!habit) return;
   const today = todayISO();
@@ -859,6 +890,7 @@ async function toggleSpecialHabit(habitId) {
 }
 
 async function toggleHabit(habitId, date) {
+  if (blockedByLock()) return;
   const habit = getHabitById(habitId);
   const wasCompleted = state.myEntries.some(e => e.habit_id === habitId && e.date === date);
 
@@ -895,9 +927,32 @@ async function toggleHabit(habitId, date) {
 // ── LOG VIEW ──────────────────────────────────────────────────────────────────
 
 function renderLog() {
+  if (CHALLENGE_LOCKED) {
+    renderLogClosedState();
+    return;
+  }
   if (state.logDate > todayISO()) state.logDate = todayISO();
   updateLogDateDisplay();
   renderLogHabits();
+}
+
+function renderLogClosedState() {
+  const container = document.getElementById('log-habits-container');
+  const heading = document.querySelector('.log-heading');
+  const dateSel = document.querySelector('.date-selector');
+  const submitWrap = document.querySelector('.log-submit-wrap');
+  if (heading) heading.style.display = 'none';
+  if (dateSel) dateSel.style.display = 'none';
+  if (submitWrap) submitWrap.style.display = 'none';
+  if (container) {
+    container.innerHTML = `
+      <div class="log-closed">
+        <div class="log-closed-emoji">🏁</div>
+        <h2 class="log-closed-title">The Challenge is Over</h2>
+        <p class="log-closed-sub">Logging has been closed and final scores are locked.<br>Head to <b>Ranks</b> to see the final standings.</p>
+        <button class="btn-primary log-closed-cta" onclick="document.querySelector('.nav-btn[data-view=&quot;leaderboard&quot;]')?.click()">View Final Ranks →</button>
+      </div>`;
+  }
 }
 
 function updateLogDateDisplay() {
@@ -1001,6 +1056,7 @@ function updateLogPointsPreview() {
 }
 
 async function submitLog() {
+  if (blockedByLock()) return;
   const date     = state.logDate;
   const week     = getWeekNumber(date, PROGRAM_START);
   const weekStart = getWeekStart(date);

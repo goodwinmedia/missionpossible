@@ -209,3 +209,18 @@ begin
     alter publication supabase_realtime add table public.entries;
   end if;
 end $$;
+
+-- ── CHALLENGE LOCK ────────────────────────────────────────
+-- Run this block once at the end of the program to permanently disable
+-- new entries from the public anon role. Reads still work; admins can
+-- still mutate via the Supabase SQL editor (service_role bypasses RLS).
+-- To re-open logging: re-create the policies by re-running the policy
+-- block earlier in this file.
+do $$ begin
+  if exists (select 1 from pg_policies where policyname = 'anon_insert_entries' and tablename = 'entries') then
+    drop policy "anon_insert_entries" on public.entries;
+  end if;
+  if exists (select 1 from pg_policies where policyname = 'anon_delete_entries' and tablename = 'entries') then
+    drop policy "anon_delete_entries" on public.entries;
+  end if;
+end $$;
