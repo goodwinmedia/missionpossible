@@ -788,22 +788,6 @@ button { cursor: pointer; font-family: var(--fbody); }
   border-color: rgba(124,58,237,.38);
   background: rgba(124,58,237,.055);
 }
-.lb-person-row.lb-blurred { opacity: .6; }
-.lb-avatar-blur {
-  background: var(--border) !important;
-  filter: blur(0);
-}
-.lb-name-blur {
-  filter: blur(5px);
-  user-select: none;
-  font-size: .9rem; font-weight: 600;
-}
-.lb-zone-blur {
-  filter: blur(4px);
-  font-size: .7rem;
-  display: inline-block;
-  margin-top: .1rem;
-}
 .lb-medal { font-size: 1.05rem; width: 32px; text-align: center; flex-shrink: 0; }
 .lb-avatar {
   width: 36px; height: 36px; border-radius: 50%;

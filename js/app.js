@@ -103,9 +103,6 @@ const state = {
   homeCollapsed: { extra: true, bonus: true },
   lbDistrict: 'all',
   lbView: 'people',
-  lbRevealTaps: 0,
-  lbRevealed: false,
-  lbRevealTimer: null,
   zoneActive: {},
   customHabits: [],   // loaded from DB, merged with static EXTRA_CREDIT / BONUS_TASKS
 };
@@ -1206,8 +1203,6 @@ function renderCompanionLeaderboard() {
   const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
   const groups = buildCompanionships();
   const ranks = tiedRanks(groups, g => g.total);
-  const isAdultLeader = state.user?.zone_id === 7;
-  const revealed = state.lbRevealed || isAdultLeader;
 
   document.getElementById('lb-companions').innerHTML = groups.map((g, i) => {
     const r = ranks[i];
@@ -1219,12 +1214,11 @@ function renderCompanionLeaderboard() {
       const initials = getInitials(m.name);
       const isSelf = m.id === state.user?.id;
       const pct = Math.round((m.pts / maxPts) * 100);
-      const showName = isSelf || revealed;
       return `
         <div class="comp-member ${isSelf ? 'self' : ''}">
           <div class="comp-mem-avatar" style="background:${mZone?.color || '#6b7280'}">${initials}</div>
           <div class="comp-mem-info">
-            <div class="comp-mem-name ${showName ? '' : 'lb-name-blur'}">${m.name}${isSelf ? ' <span class="you-tag">you</span>' : ''}</div>
+            <div class="comp-mem-name">${m.name}${isSelf ? ' <span class="you-tag">you</span>' : ''}</div>
             <div class="comp-mem-bar"><div class="comp-mem-bar-fill" style="width:${pct}%;background:${mZone?.color || '#6b7280'}"></div></div>
           </div>
           <div class="comp-mem-pts">${m.pts}<span>pts</span></div>
@@ -1253,15 +1247,11 @@ function renderPeopleLeaderboard() {
   const { people } = aggregateData();
   const medalColors = ['#f59e0b', '#94a3b8', '#cd7c54'];
   const ranks = tiedRanks(people, p => p.points);
-  // Adult Leaders (zone 7) always see the unblurred ranking.
-  const isAdultLeader = state.user?.zone_id === 7;
-  const revealed = state.lbRevealed || isAdultLeader;
 
   document.getElementById('lb-people').innerHTML = people.map((p, i) => {
     const r = ranks[i];
     const medal = r <= 3 ? `style="color:${medalColors[r - 1]}"` : '';
-    if (p.isMe || revealed) {
-      return `
+    return `
       <div class="lb-person-row ${p.isMe ? 'is-me' : ''}">
         <span class="lb-medal" ${medal}>${r}</span>
         <div class="lb-avatar" style="background:${p.zone?.color || '#6b7280'}">${getInitials(p.name)}</div>
@@ -1271,40 +1261,7 @@ function renderPeopleLeaderboard() {
         </div>
         <div class="lb-person-pts">${p.points}<span>pts</span></div>
       </div>`;
-    }
-    return `
-      <div class="lb-person-row lb-blurred">
-        <span class="lb-medal" ${medal}>${r}</span>
-        <div class="lb-avatar lb-avatar-blur"></div>
-        <div class="lb-person-info">
-          <div class="lb-person-name lb-name-blur">${p.name}</div>
-          <div class="lb-person-zone lb-zone-blur">${p.zone?.name || '&nbsp;'}</div>
-        </div>
-        <div class="lb-person-pts">${p.points}<span>pts</span></div>
-      </div>`;
   }).join('');
-
-  // Easter egg: tap 10 times anywhere on the list to reveal for 30s
-  const container = document.getElementById('lb-people');
-  if (!container.dataset.eggBound) {
-    container.dataset.eggBound = '1';
-    container.addEventListener('click', () => {
-      if (state.lbRevealed) return;
-      state.lbRevealTaps = (state.lbRevealTaps || 0) + 1;
-      if (state.lbRevealTaps >= 10) {
-        state.lbRevealTaps = 0;
-        state.lbRevealed = true;
-        renderPeopleLeaderboard();
-        showToast('🔍 Names revealed for 30s', 'success');
-        if (state.lbRevealTimer) clearTimeout(state.lbRevealTimer);
-        state.lbRevealTimer = setTimeout(() => {
-          state.lbRevealed = false;
-          state.lbRevealTimer = null;
-          renderPeopleLeaderboard();
-        }, 30000);
-      }
-    });
-  }
 }
 
 // ── DISTRICT VIEW ─────────────────────────────────────────────────────────────
